@@ -1,56 +1,22 @@
 <template>
   <ion-page>
     <ion-header :translucent="true">
-      <ion-toolbar>
-        <ion-title>Blank</ion-title>
+      <ion-toolbar class="border-b border-zinc-100 dark:border-zinc-900" style="--background: var(--color-surface, #ffffff); --color: var(--color-text, #0f172a);">
+        <ion-title class="font-bold text-lg text-zinc-900 dark:text-zinc-50">Home</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Blank</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
-      <div id="container">
-        <strong>Ready to create an app?</strong>
-        <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <ion-content :fullscreen="true" class="bg-zinc-50 dark:bg-zinc-950">
+      <div class="flex flex-col items-center justify-center min-h-full p-6 text-center gap-2">
+        <strong class="text-xl font-bold text-zinc-900 dark:text-zinc-50">Ready to create an app?</strong>
+        <p class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+          Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">UI Components</a>
+        </p>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
-<script setup lang="ts">
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+<script setup>
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue'
 </script>
-
-<style scoped>
-#container {
-  text-align: center;
-  
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
-}
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  
-  color: #8c8c8c;
-  
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
-}
-</style>
