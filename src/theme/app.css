@@ -1,3 +1,44 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+.env_margin_top {
+    margin-top: env(safe-area-inset-top);
+}
+
+.env_margin_bottom {
+    margin-bottom: env(safe-area-inset-bottom);
+}
+
+.env_padding_top {
+    padding-top: env(safe-area-inset-top);
+}
+
+.env_padding_bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.env_padding_left {
+    padding-left: env(safe-area-inset-left);
+}
+
+.env_padding_right {
+    padding-right: env(safe-area-inset-right);
+}
+
+.env_padding_x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+.env_padding_y {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.env_padding_all {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+}

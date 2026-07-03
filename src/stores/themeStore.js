@@ -1,19 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useCP } from '../composables/index.js'
 
 const STORAGE_KEY = 'app_theme'
 const VALID_THEMES = ['light', 'dark', 'system']
 
 export const useThemeStore = defineStore('theme', () => {
   const currentTheme = ref('system')
+  const CP = useCP()
 
   function applyTheme(theme) {
     const root = document.documentElement
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
     let isDark = false
-    if (theme === 'dark') isDark = true
-    else if (theme === 'system') isDark = prefersDark
+
+    if (theme === 'dark') {
+      isDark = true
+    } else if (theme === 'system') {
+      isDark = prefersDark
+    }
 
     if (isDark) {
       root.classList.add('dark', 'ion-palette-dark')
@@ -24,21 +30,29 @@ export const useThemeStore = defineStore('theme', () => {
     }
   }
 
-  function setTheme(theme) {
+  async function setTheme(theme) {
     if (!VALID_THEMES.includes(theme)) return
+
     currentTheme.value = theme
-    localStorage.setItem(STORAGE_KEY, theme)
+
+    await CP.set(STORAGE_KEY, theme)
+
     applyTheme(theme)
   }
 
-  function loadTheme() {
-    const saved = localStorage.getItem(STORAGE_KEY) || 'system'
+  async function loadTheme() {
+    const result = await CP.get(STORAGE_KEY)
+
+    const saved = result || 'system'
+
     currentTheme.value = saved
+
     applyTheme(saved)
 
-    // Listen for system preference changes when "system" is selected
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (currentTheme.value === 'system') applyTheme('system')
+      if (currentTheme.value === 'system') {
+        applyTheme('system')
+      }
     })
   }
 

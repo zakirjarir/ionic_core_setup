@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import { useAuthStore } from '@/stores/auth'
+import {useCP, useFunction, useStore} from "@/composables/index.js";
 
 const routes = [
   {
@@ -9,19 +10,19 @@ const routes = [
 
   // Auth routes (guest only)
   {
-    path: '/login',
+    path: '/auth/login',
     name: 'Login',
     component: () => import('@/views/auth/LoginPage.vue'),
     meta: { guest: true },
   },
   {
-    path: '/register',
+    path: '/auth/register',
     name: 'Register',
     component: () => import('@/views/auth/RegisterPage.vue'),
     meta: { guest: true },
   },
   {
-    path: '/forgot-password',
+    path: '/auth/forgot-password',
     name: 'ForgotPassword',
     component: () => import('@/views/auth/ForgotPasswordPage.vue'),
     meta: { guest: true },
@@ -117,9 +118,13 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
-  const isAuthenticated = authStore.isAuthenticated
+router.beforeEach(async (to, from, next) => {
+
+  const store = useStore()
+
+  const {getAuthToken} = useFunction()
+  const token = await getAuthToken()
+  const isAuthenticated = !!store.authToken
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next({ name: 'Login' })

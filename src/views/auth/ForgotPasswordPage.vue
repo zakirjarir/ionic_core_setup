@@ -52,7 +52,7 @@
         <!-- Footer -->
         <div class="flex justify-center items-center gap-1.5 pt-6 pb-2">
           <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $t('auth.have_account') }}</span>
-          <router-link to="/login" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">{{ $t('auth.login') }}</router-link>
+          <router-link to="/auth/login" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">{{ $t('auth.login') }}</router-link>
         </div>
       </div>
     </ion-content>

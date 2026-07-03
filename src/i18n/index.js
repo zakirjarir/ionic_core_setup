@@ -2,10 +2,13 @@ import { createI18n } from 'vue-i18n'
 import en from '@/locales/en.json'
 import bn from '@/locales/bn.json'
 import ar from '@/locales/ar.json'
+import {useCP} from "../composables/index.js";
 
 const RTL_LOCALES = ['ar']
 const STORAGE_KEY = 'app_locale'
 
+
+const CP = useCP()
 export const SUPPORTED_LOCALES = [
   { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
   { code: 'bn', name: 'Bangla', nativeName: 'বাংলা', dir: 'ltr' },
@@ -13,7 +16,7 @@ export const SUPPORTED_LOCALES = [
 ]
 
 function getSavedLocale() {
-  return localStorage.getItem(STORAGE_KEY) || 'en'
+  return CP.get(STORAGE_KEY) || 'en'
 }
 
 export function isRTL(locale) {

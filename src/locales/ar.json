@@ -44,7 +44,7 @@
     "forgot_password": "نسيت كلمة المرور؟",
     "forgot_subtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين",
     "email_label": "البريد الإلكتروني",
-    "email_placeholder": "you@example.com",
+    "email_placeholder": "المرور yالبريد",
     "password_label": "كلمة المرور",
     "password_placeholder": "أدخل كلمة المرور",
     "new_password_placeholder": "٨ أحرف على الأقل",

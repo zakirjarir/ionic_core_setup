@@ -40,13 +40,12 @@ const app = createApp(App)
   .use(pinia)
   .use(i18n)
 
-router.isReady().then(() => {
-  // Bootstrap: load theme, auth state, language is already loaded by i18n/index.js
+router.isReady().then(async () => {
   const themeStore = useThemeStore()
-  themeStore.loadTheme()
+  await themeStore.loadTheme()
 
   const authStore = useAuthStore()
-  authStore.fetchUser()
+  await authStore.fetchUser()
 
   app.mount('#app')
 })

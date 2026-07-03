@@ -18,7 +18,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(credentials) {
-    // TODO: replace with real API call
     // const response = await api.post('/auth/login', credentials)
     const mockUser = {
       id: 1,

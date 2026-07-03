@@ -149,7 +149,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonBackButton, IonButtons,
+  IonPage,  IonContent, IonIcon,
   IonToggle, alertController,
 } from '@ionic/vue'
 import {

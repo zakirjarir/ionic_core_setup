@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-   <z-header title="$t('support.title')"/>
+   <z-header :title="$t('support.title')"/>
 
     <ion-content class="bg-zinc-50 dark:bg-zinc-950">
       <div class="p-4 flex flex-col gap-6">

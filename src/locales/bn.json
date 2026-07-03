@@ -44,7 +44,7 @@
     "forgot_password": "পাসওয়ার্ড ভুলে গেছেন?",
     "forgot_subtitle": "আপনার ইমেইল দিন, আমরা রিসেট লিংক পাঠাবো",
     "email_label": "ইমেইল ঠিকানা",
-    "email_placeholder": "you@example.com",
+    "email_placeholder": "ইমেইল লিখুন ",
     "password_label": "পাসওয়ার্ড",
     "password_placeholder": "পাসওয়ার্ড লিখুন",
     "new_password_placeholder": "কমপক্ষে ৮ অক্ষর",
