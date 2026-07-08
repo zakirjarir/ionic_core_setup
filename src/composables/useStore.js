@@ -33,6 +33,33 @@ export const useStore = defineStore('data', () => {
 
 
 
+
+    const birthTypes = [
+        { label: 'Normal Delivery', value: 'normal_delivery' },
+        { label: 'Elective C-Section', value: 'elective_c_section' },
+        { label: 'Emergency C-Section', value: 'emergency_c_section' },
+        { label: 'Home Delivery', value: 'home_delivery' },
+        { label: 'Hospital Delivery', value: 'hospital_delivery' },
+        { label: 'Unknown', value: 'unknown' }
+    ]
+
+    const genders = [
+        { label: 'Male', value: 'male' },
+        { label: 'Female', value: 'female' },
+        { label: 'Other', value: 'other' }
+    ]
+    const bloodGroups = [
+        { label: 'A+', value: 'A+' },
+        { label: 'A-', value: 'A-' },
+        { label: 'B+', value: 'B+' },
+        { label: 'B-', value: 'B-' },
+        { label: 'AB+', value: 'AB+' },
+        { label: 'AB-', value: 'AB-' },
+        { label: 'O+', value: 'O+' },
+        { label: 'O-', value: 'O-' }
+    ]
+
+
     const reset = () => {
         authToken.value = null
         currentLocale.value = null
@@ -68,6 +95,11 @@ export const useStore = defineStore('data', () => {
         dataList,
         data,
         reset,
+        genders,
+        birthTypes,
+        bloodGroups
+
+
     }
 
 })

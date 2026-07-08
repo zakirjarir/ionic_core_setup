@@ -50,16 +50,24 @@
         <!-- ── LANGUAGE ── -->
         <div>
           <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2 ml-1">{{ $t('settings.language_section') }}</p>
-          <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm">
-            <div @click="$router.push('/language')" class="flex items-center justify-between cursor-pointer active:opacity-70 transition-opacity">
-              <div class="flex items-center gap-3">
-                <ion-icon :icon="languageOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
-                <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.language') }}</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <span class="text-xs font-semibold text-zinc-400 dark:text-zinc-500">{{ currentLocaleInfo.nativeName }}</span>
-                <ion-icon :icon="chevronForwardOutline" class="text-base text-zinc-400 dark:text-zinc-500" />
-              </div>
+          <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col gap-4">
+            <!-- Label -->
+            <div class="flex items-center gap-3">
+              <ion-icon :icon="languageOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+              <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.language') }}</span>
+            </div>
+            <!-- Language chips -->
+            <div class="flex gap-2">
+              <button
+                v-for="lang in supportedLocales"
+                :key="lang.code"
+                class="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 font-semibold text-[11px] transition-all cursor-pointer"
+                :class="{ 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400': currentLocale === lang.code }"
+                @click="setLanguage(lang.code)"
+              >
+                <span class="text-base leading-none">{{ lang.code === 'en' ? '🇬🇧' : lang.code === 'bn' ? '🇧🇩' : '🇸🇦' }}</span>
+                <span>{{ lang.nativeName }}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -167,7 +175,7 @@ const { t } = useI18n()
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
 const router = useRouter()
-const { currentLocaleInfo } = useLanguage()
+const { currentLocale, currentLocaleInfo, setLanguage, supportedLocales } = useLanguage()
 
 const pushEnabled = ref(true)
 const emailEnabled = ref(false)

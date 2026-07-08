@@ -97,6 +97,12 @@ const routes = [
     component: () => import('@/views/pages/AboutPage.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/children-register',
+    name: 'ChildrenRegister',
+    component: () => import('@/views/pages/ChildrenRegister.vue'),
+    meta: { requiresAuth: true },
+  },
 
   // Privacy Policy (protected)
   {
@@ -118,13 +124,18 @@ const router = createRouter({
   routes,
 })
 
+let appLoaded = false
+
 router.beforeEach(async (to, from, next) => {
+  const { getAuthToken, loadUser } = useFunction()
 
-  const store = useStore()
-
-  const {getAuthToken} = useFunction()
   const token = await getAuthToken()
-  const isAuthenticated = !!store.authToken
+  const isAuthenticated = !!token
+
+  if (isAuthenticated && !appLoaded) {
+    appLoaded = true
+    await loadUser()
+  }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next({ name: 'Login' })
@@ -133,7 +144,6 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.guest && isAuthenticated) {
     return next({ path: '/tabs/dashboard' })
   }
-
   next()
 })
 

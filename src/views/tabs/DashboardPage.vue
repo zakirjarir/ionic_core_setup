@@ -1,115 +1,433 @@
 <template>
   <ion-page>
+    <ion-content class="ion-padding-bottom bg-[#F8FAFC] dark:bg-slate-950">
 
-    <z-header :title=" $t('dashboard.title')" :show-notification="true"/>
-
-    <ion-content class="bg-zinc-50 dark:bg-zinc-950">
-      <div class="p-4 flex flex-col gap-5">
-        <!-- Welcome Banner -->
-        <div class="bg-gradient-to-tr from-indigo-600 to-cyan-500 rounded-3xl p-5 flex justify-between items-center shadow-lg shadow-indigo-500/10">
-          <div class="flex flex-col gap-1">
-            <p class="text-lg font-bold text-white">{{ $t('dashboard.welcome', { name: authStore.user?.name || 'User' }) }}</p>
-            <p class="text-xs text-white/80 font-medium">{{ $t('common.app_tagline') }}</p>
-          </div>
-          <div class="text-4xl text-white/60">
-            <ion-icon :icon="heartOutline" />
-          </div>
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-2xl p-4 flex flex-col gap-1.5 bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400">
-            <ion-icon :icon="peopleOutline" class="text-xl" />
-            <p class="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">3</p>
-            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ $t('dashboard.total_children') }}</p>
-          </div>
-          <div class="rounded-2xl p-4 flex flex-col gap-1.5 bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400">
-            <ion-icon :icon="timeOutline" class="text-xl" />
-            <p class="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">2</p>
-            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ $t('dashboard.due_soon') }}</p>
-          </div>
-          <div class="rounded-2xl p-4 flex flex-col gap-1.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400">
-            <ion-icon :icon="checkmarkCircleOutline" class="text-xl" />
-            <p class="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">14</p>
-            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ $t('dashboard.completed') }}</p>
-          </div>
-          <div class="rounded-2xl p-4 flex flex-col gap-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400">
-            <ion-icon :icon="alertCircleOutline" class="text-xl" />
-            <p class="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">1</p>
-            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ $t('dashboard.overdue') }}</p>
-          </div>
-        </div>
-
-        <!-- Upcoming Vaccinations -->
-        <div>
-          <div class="flex justify-between items-center mb-3">
-            <h2 class="text-base font-bold text-zinc-900 dark:text-zinc-50">{{ $t('dashboard.upcoming') }}</h2>
-            <button class="bg-transparent border-none text-xs font-semibold text-indigo-600 dark:text-indigo-400 cursor-pointer" @click="$router.push('/tabs/vaccination')">
-              {{ $t('dashboard.view_all') }}
-            </button>
-          </div>
-
-          <div class="flex flex-col gap-2.5">
-            <div
-              v-for="item in upcomingItems"
-              :key="item.id"
-              class="flex justify-between items-center p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="item.dotColor"></div>
-                <div>
-                  <p class="text-sm font-bold text-zinc-900 dark:text-zinc-50">{{ item.vaccine }}</p>
-                  <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ item.child }}</p>
-                </div>
-              </div>
-              <div>
-                <span class="text-xs font-bold px-3 py-1.5 rounded-full" :class="item.badgeClass">
-                  {{ item.date }}
-                </span>
-              </div>
+      <!-- ===== Header (Sticky) ===== -->
+      <div class="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 pt-6 pb-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
+              <img @click="router.push('/tabs/profile')" :src="LFA(user?.photo)" alt="Profile" class="w-full h-full object-cover" />
+            </div>
+            <div>
+              <div class="text-[20px] font-black text-gray-800 dark:text-white m-0 pt-2">{{ user?.name || 'Guest User ' }}</div>
+              <p class="text-[10px] text-gray-400 dark:text-slate-400 m-0">{{ $t('dashboard.registered_children', { count: children.length }) }}</p>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Child Selector (Horizontal Scroll - infinite) -->
+      <div class="px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide">
+        <div
+            v-for="(child, index) in children"
+            :key="child.id"
+            class="flex-1 min-w-[166px] rounded-2xl p-1.5 flex items-center justify-between relative transition-all duration-200"
+            :class="activeChildId === child.id
+            ? 'border-2 border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30'
+            : 'border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900'"
+            @click="activeChildId = child.id"
+        >
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-blue-200 dark:bg-slate-700">
+              <img :src="child.avatar" :alt="child.name" class="w-full h-full object-cover" />
+            </div>
+            <div>
+              <span class="text-sm text-gray-800 dark:text-white m-0">{{ child.name }}</span>
+              <p class="text-[10px] text-gray-500 dark:text-slate-400 m-0">{{ child.age }}</p>
+            </div>
+          </div>
+          <div v-if="activeChildId === child.id" class="bg-indigo-600 text-white rounded-full p-1 flex items-center justify-center w-5 h-5">
+            <ion-icon :icon="checkmarkOutline" class="text-xs font-bold"></ion-icon>
+          </div>
+          <ion-icon v-else :icon="chevronForwardOutline" class="text-gray-400 dark:text-slate-500"></ion-icon>
+        </div>
+      </div>
+      <div
+          class="mx-4 my-3 relative overflow-hidden rounded-3xl bg-cover bg-center bg-no-repeat shadow-lg"
+          style="background-image: url('/images/vaccine_battle.png'); min-height: 190px;"
+      >
+        <!-- Overlay -->
+        <div
+            class="absolute inset-0
+           bg-gradient-to-r
+           from-white/95
+           via-cyan-50/80
+           to-teal-100/20
+           dark:from-slate-900/95
+           dark:via-slate-800/80
+           dark:to-slate-900/20"
+        ></div>
+
+        <!-- Content -->
+        <div class="relative z-10 p-4 flex h-full items-center">
+          <div class="max-w-[58%]">
+
+            <!-- Badge -->
+            <div
+                class="inline-flex items-center rounded-full
+               bg-emerald-500/10
+               px-2.5 py-1
+               text-[10px] font-semibold
+               text-emerald-700 dark:text-emerald-300"
+            >
+              {{ $t('dashboard.next_vaccine') }}
+            </div>
+
+            <!-- Vaccine Name -->
+            <h2
+                class="mt-2 text-lg font-black
+               leading-tight
+               text-slate-900 dark:text-white"
+            >
+              {{ nextVaccine.name }}
+            </h2>
+
+            <!-- Info -->
+            <div class="mt-3 flex flex-col gap-2">
+
+              <div
+                  class="inline-flex w-fit items-center gap-2
+                 rounded-lg bg-white/70
+                 px-3 py-1.5 text-xs
+                 dark:bg-slate-800/70"
+              >
+                <IonIcon
+                    :icon="calendarOutline"
+                    class="text-sm"
+                />
+                <span>{{ nextVaccine.date }}</span>
+              </div>
+
+              <div
+                  class="inline-flex w-fit items-center gap-2
+                 rounded-lg bg-orange-50
+                 px-3 py-1.5 text-xs
+                 dark:bg-orange-900/20"
+              >
+                <IonIcon
+                    :icon="timeOutline"
+                    class="text-sm text-orange-500"
+                />
+                <span
+                    class="font-medium text-orange-600 dark:text-orange-400"
+                >
+            {{ nextVaccine.remaining }}
+          </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Progress + Quick Actions ===== -->
+      <div class="px-4 my-4 grid grid-cols-2 gap-4">
+        <!-- Progress Circle (SVG) -->
+        <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-gray-50 dark:border-slate-800 flex flex-col items-center justify-center shadow-sm dark:shadow-slate-800/50">
+          <div class="text-[13px] font-bold text-gray-700 dark:text-slate-300  self-start">{{ $t('dashboard.progress_title') }}</div>
+          <div class="relative w-28 h-28 flex items-center justify-center">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <!-- Background circle -->
+              <circle
+                  cx="50" cy="50" r="42"
+                  fill="none"
+                  stroke="#e5e7eb"
+                  class="dark:stroke-slate-700"
+                  stroke-width="8"
+              />
+              <!-- Progress circle -->
+              <circle
+                  cx="50" cy="50" r="42"
+                  fill="none"
+                  stroke="#4F46E5"
+                  class="dark:stroke-indigo-400"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                  :stroke-dasharray="circumference"
+                  :stroke-dashoffset="circumference - (circumference * progress / 100)"
+              />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-lg font-black text-gray-800 dark:text-white">{{ progress }}%</span>
+              <p class="text-[9px] text-gray-500 dark:text-slate-400 font-bold m-0 mt-0.5 leading-tight text-center">
+                {{ $t('dashboard.progress_unit', { completed: completedVaccines, total: totalVaccines }) }}
+                <br><span class="font-normal text-gray-400 dark:text-slate-500">{{ $t('dashboard.completed_label') }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 gap-1">
+          <div
+              v-for="action in quickActions"
+              :key="action.label"
+              class="p-3 rounded-xl flex flex-col items-center justify-center text-center border transition-colors"
+              :class="action.bg"
+          >
+            <div class=" rounded-lg mb-1" :class="action.iconBg">
+              <ion-icon :icon="action.icon" :class="action.iconColor"></ion-icon>
+            </div>
+            <span class="text-[10px] font-bold text-gray-700 dark:text-slate-300">{{ action.label }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Schedule -->
+      <div class="px-4 my-4">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs font-bold text-gray-800 dark:text-white">{{ $t('dashboard.upcoming_schedule') }}</h3>
+          <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">{{ $t('dashboard.view_all') }}</span>
+        </div>
+
+        <div
+            v-for="schedule in upcomingSchedules"
+            :key="schedule.id"
+            class="bg-white dark:bg-slate-900 border border-gray-50 dark:border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-sm dark:shadow-slate-800/50 mb-3"
+        >
+          <div class="flex items-center gap-3">
+            <div class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-xl p-2 text-center flex flex-col justify-center min-w-[50px]">
+              <span class="text-sm font-black leading-none">{{ schedule.day }}</span>
+              <span class="text-[9px] font-bold mt-1">{{ schedule.monthYear }}</span>
+            </div>
+            <div>
+              <h4 class="text-[11px] font-bold text-gray-800 dark:text-white m-0">{{ schedule.vaccine }} <span class="text-[9px] text-gray-400 dark:text-slate-400 font-normal">{{ schedule.detail }}</span></h4>
+              <div class="flex items-center gap-3 mt-1">
+                <span class="text-[9px] text-gray-500 dark:text-slate-400 flex items-center gap-1">
+                  <div class="w-3 h-3 rounded-full bg-blue-200 dark:bg-slate-600 overflow-hidden inline-block">
+                    <img :src="schedule.childAvatar" class="w-full h-full object-cover"/>
+                  </div>
+                  {{ schedule.childName }}
+                </span>
+                <span class="text-[9px] text-gray-400 dark:text-slate-500">{{ schedule.childAge }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[9px] bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-1 rounded-full">{{ schedule.remaining }}</span>
+            <ion-icon :icon="chevronForwardOutline" class="text-gray-400 dark:text-slate-500 text-sm"></ion-icon>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="px-4 my-4">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs font-bold text-gray-800 dark:text-white">{{ $t('dashboard.recent_notifications') }}</h3>
+          <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">{{ $t('dashboard.view_all') }}</span>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-gray-50 dark:border-slate-800 rounded-2xl divide-y divide-gray-100 dark:divide-slate-800 shadow-sm dark:shadow-slate-800/50">
+          <div
+              v-for="note in notifications"
+              :key="note.id"
+              class="p-3 flex items-start justify-between"
+          >
+            <div class="flex gap-3">
+              <div class="p-2 rounded-full mt-4" >
+                <ion-icon :icon="note.icon" :class="note.iconColor"></ion-icon>
+              </div>
+              <div>
+                <h5 class="text-[11px] font-bold text-gray-800 dark:text-white m-0">{{ note.title }}</h5>
+                <p class="text-[10px] text-gray-500 dark:text-slate-400 m-0 mt-0.5">{{ note.desc }}</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 min-w-[60px]">
+              <span class="text-[8px] text-gray-400 dark:text-slate-500">{{ note.time }}</span>
+              <span v-if="!note.read" class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Health Tip -->
+      <div class="mx-4 my-4 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800/50 rounded-2xl p-3 flex items-center gap-3">
+        <div class="w-16 h-16 flex-shrink-0 bg-amber-100 dark:bg-amber-800/30 rounded-xl overflow-hidden flex items-center justify-center">
+          <span class="text-2xl">👨‍👩‍👦</span>
+        </div>
+        <div>
+          <h4 class="text-[11px] font-bold text-amber-800 dark:text-amber-400 m-0 flex items-center gap-1">
+            {{ $t('dashboard.health_tip_title') }}
+          </h4>
+          <p class="text-[10px] text-amber-700/90 dark:text-amber-300/80 m-0 mt-0.5 leading-relaxed">
+            {{ $t('dashboard.health_tip_desc') }}
+          </p>
+        </div>
+      </div>
+
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
-import {IonPage, IonContent, IonIcon,} from '@ionic/vue'
+import { ref, computed } from 'vue'
 import {
-  heartOutline, peopleOutline, timeOutline, checkmarkCircleOutline,
-  alertCircleOutline,
+  IonPage, IonContent, IonIcon, IonButton, onIonViewWillEnter
+} from '@ionic/vue'
+import {
+  notificationsOutline,
+  personAddOutline,
+  checkmarkOutline,
+  chevronForwardOutline,
+  calendarOutline,
+  timeOutline,
+  arrowForwardOutline,
+  shieldCheckmark,
+  ribbonOutline,
+  calendarNumberOutline,
+  documentTextOutline,
+  cardOutline,
 } from 'ionicons/icons'
-import { useAuthStore } from '@/stores/auth'
-import ZHeader from "@/components/ZHeader.vue";
+import { useI18n } from 'vue-i18n'
+import router from "@/router/index.js";
+import {useCP, useFunction} from "@/composables/index.js";
 
-const authStore = useAuthStore()
+const { t } = useI18n()
+const CP = useCP();
+const user = ref({})
+const {LFA} = useFunction()
 
-const upcomingItems = [
+onIonViewWillEnter(async ()=>{
+   user.value = await  CP.get('user');
+})
+
+
+
+// ===== Children Data =====
+const children = computed(() => [
   {
     id: 1,
-    vaccine: 'MMR (Measles-Mumps-Rubella)',
-    child: 'Ayaan Rahman',
-    date: 'Jul 10',
-    dotColor: 'bg-amber-500',
-    badgeClass: 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400'
+    name: t('dashboard.arafat'),
+    age: t('dashboard.arafat_age'),
+    avatar: 'https://plus.unsplash.com/premium_photo-1664474430762-f5201ecb6c43?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmV3Ym9ybnxlbnwwfHwwfHx8MA%3D%3D'
   },
   {
     id: 2,
-    vaccine: 'DTP Booster',
-    child: 'Zara Khan',
-    date: 'Jul 18',
-    dotColor: 'bg-blue-500',
-    badgeClass: 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400'
+    name: t('dashboard.ayesha'),
+    age: t('dashboard.ayesha_age'),
+    avatar: 'https://plus.unsplash.com/premium_photo-1664474430762-f5201ecb6c43?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmV3Ym9ybnxlbnwwfHwwfHx8MA%3D%3D'
   },
   {
     id: 3,
-    vaccine: 'Hepatitis B',
-    child: 'Rayan Ali',
-    date: 'Aug 2',
-    dotColor: 'bg-emerald-500',
-    badgeClass: 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400'
+    name: t('dashboard.rafi'),
+    age: t('dashboard.rafi_age'),
+    avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=200&h=200&fit=crop'
+  }
+])
+
+const activeChildId = ref(1)
+
+// ===== Next Vaccine =====
+const nextVaccine = computed(() => ({
+  name: 'MR Vaccine',
+  date: t('dashboard.next_vaccine_date'),
+  remaining: t('dashboard.next_vaccine_remaining')
+}))
+
+// ===== Progress =====
+const totalVaccines = 12
+const completedVaccines = 8
+const progress = computed(() => Math.round((completedVaccines / totalVaccines) * 100))
+const circumference = 2 * Math.PI * 42 // r=42
+
+// ===== Quick Actions =====
+const quickActions = computed(() => [
+  {
+    label: t('dashboard.action_schedule'),
+    icon: ribbonOutline,
+    bg: 'bg-purple-50/50 dark:bg-purple-950/30 border-purple-100/50 dark:border-purple-800/30',
+    iconBg: 'bg-purple-100 dark:bg-purple-900/50',
+    iconColor: 'text-purple-600 dark:text-purple-400'
   },
-]
+  {
+    label: t('dashboard.action_time'),
+    icon: calendarNumberOutline,
+    bg: 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-100/50 dark:border-blue-800/30',
+    iconBg: 'bg-blue-100 dark:bg-blue-900/50',
+    iconColor: 'text-blue-600 dark:text-blue-400'
+  },
+  {
+    label: t('dashboard.action_history'),
+    icon: documentTextOutline,
+    bg: 'bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-100/50 dark:border-emerald-800/30',
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
+    iconColor: 'text-emerald-600 dark:text-emerald-400'
+  },
+  {
+    label: t('dashboard.action_card'),
+    icon: cardOutline,
+    bg: 'bg-orange-50/50 dark:bg-orange-950/30 border-orange-100/50 dark:border-orange-800/30',
+    iconBg: 'bg-orange-100 dark:bg-orange-900/50',
+    iconColor: 'text-orange-600 dark:text-orange-400'
+  }
+])
+
+// ===== Upcoming Schedules =====
+const upcomingSchedules = computed(() => [
+  {
+    id: 1,
+    day: '১৫',
+    monthYear: t('dashboard.july_2026'),
+    vaccine: 'MR Vaccine',
+    detail: '(Measles-Rubella)',
+    childName: t('dashboard.arafat'),
+    childAge: t('dashboard.arafat_age'),
+    childAvatar: 'https://plus.unsplash.com/premium_photo-1664474430762-f5201ecb6c43?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmV3Ym9ybnxlbnwwfHwwfHx8MA%3D%3D',
+    remaining: t('dashboard.remaining_days_11')
+  },
+  {
+    id: 2,
+    day: '২২',
+    monthYear: t('dashboard.august_2026'),
+    vaccine: 'Polio Booster',
+    detail: '(Oral)',
+    childName: t('dashboard.ayesha'),
+    childAge: t('dashboard.ayesha_age'),
+    childAvatar: 'https://plus.unsplash.com/premium_photo-1664474430762-f5201ecb6c43?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmV3Ym9ybnxlbnwwfHwwfHx8MA%3D%3D',
+    remaining: t('dashboard.remaining_days_42')
+  }
+])
+
+// ===== Notifications =====
+const notifications = computed(() => [
+  {
+    id: 1,
+    title: t('dashboard.note_title_1'),
+    desc: t('dashboard.note_desc_1'),
+    time: t('dashboard.time_2h'),
+    icon: notificationsOutline,
+    iconColor: 'text-red-500 dark:text-red-400',
+    read: false
+  },
+  {
+    id: 2,
+    title: t('dashboard.note_title_2'),
+    desc: t('dashboard.note_desc_2'),
+    time: t('dashboard.time_1d'),
+    icon: calendarOutline,
+    iconColor: 'text-blue-500 dark:text-blue-400',
+    read: false
+  },
+  {
+    id: 3,
+    title: t('dashboard.note_title_3'),
+    desc: t('dashboard.note_desc_3'),
+    time: t('dashboard.time_2d'),
+    icon: ribbonOutline,
+    iconColor: 'text-emerald-500 dark:text-emerald-400',
+    read: true
+  }
+])
 </script>
+
+<style scoped>
+/* Horizontal Scrollbar Hide */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

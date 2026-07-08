@@ -2,7 +2,7 @@
   <ion-page>
     <z-header :title="$t('children.title')">
       <template #end>
-        <ion-button fill="clear" @click="showAddModal = true" class="text-indigo-600 dark:text-indigo-400">
+        <ion-button fill="clear" @click="router.push('/children-register')" class="text-indigo-600 dark:text-indigo-400">
           <ion-icon slot="icon-only" :icon="addOutline" />
         </ion-button>
       </template>
@@ -17,9 +17,9 @@
           <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{ $t('children.no_children_sub') }}</p>
         </div>
         <ion-button
-          style="--background: #4f46e5; --border-radius: 12px; --color: #fff;"
-          class="h-12 font-semibold text-sm px-6 mt-2"
-          @click="showAddModal = true"
+            style="--background: #4f46e5; --border-radius: 12px; --color: #fff;"
+            class="h-12 font-semibold text-sm px-6 mt-2"
+            @click="showAddModal = true"
         >
           {{ $t('children.add_child') }}
         </ion-button>
@@ -28,13 +28,13 @@
       <!-- Children List -->
       <div v-else class="p-4 flex flex-col gap-3">
         <div
-          v-for="child in children"
-          :key="child.id"
-          class="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm"
+            v-for="child in children"
+            :key="child.id"
+            class="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm"
         >
           <div
-            class="w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0"
-            :class="child.gender === 'male' ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400' : 'bg-pink-50 dark:bg-pink-950/20 text-pink-600 dark:text-pink-400'"
+              class="w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0"
+              :class="child.gender === 'male' ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400' : 'bg-pink-50 dark:bg-pink-950/20 text-pink-600 dark:text-pink-400'"
           >
             <ion-icon :icon="maleFemaleOutline" />
           </div>
@@ -54,6 +54,8 @@
           </div>
         </div>
       </div>
+
+      <!-- ================================= -->
     </ion-content>
   </ion-page>
 </template>
@@ -66,6 +68,7 @@ import {
 } from '@ionic/vue'
 import { addOutline, peopleOutline, maleFemaleOutline, createOutline } from 'ionicons/icons'
 import ZHeader from "@/components/ZHeader.vue";
+import router from "@/router/index.js";
 
 const showAddModal = ref(false)
 const children = ref([

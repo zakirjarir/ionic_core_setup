@@ -4,7 +4,6 @@ import {useStore, useAlert, useCP,} from "@/composables/index.js";
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Capacitor } from '@capacitor/core'
 
-import {  unref ,isRef} from 'vue';
 
 import i18n from '@/i18n'
 
@@ -170,14 +169,14 @@ export const useFunction = () => {
                 data
             });
 
-            if(parseInt(readData.status) === 2000){
+            if(parseInt(readData?.status) === 2000){
                 if(rtn){
                     return readData.result
                 }
                 store.data = readData.result
             }
             else {
-                toastAlert(parseInt(readData.status) ,readData.message)
+                toastAlert(parseInt(readData?.status) ,readData.message)
             }
         }catch (err){
             console.error(err)
@@ -356,12 +355,12 @@ export const useFunction = () => {
                 }
                 return true
 
-            } else if(parseInt(readData.status) === 8000) {
+            } else if(parseInt(readData?.status) === 8000) {
                 showConfirm('Access Denied', readData?.message);
 
             }
 
-            else if(parseInt(readData.status) === 3000){
+            else if(parseInt(readData?.status) === 3000){
                 store.errors = readData.result || {};
                 toastAlert(readData.status, readData.message || "Something went wrong");
                 return false;
@@ -480,9 +479,12 @@ export const useFunction = () => {
             });
 
             if (parseInt(readData.status) === 2000) {
-                store.generalData = readData.result || {};
+                store.generalData = {
+                    ...store.generalData,
+                    ...(readData.result || {})
+                };
             } else {
-                toastAlert('danger', readData.message || "Failed to load data");
+                toastAlert(readData.status, readData.message);
             }
         } catch (error) {
             console.error("getGeneralData error:", error);
@@ -750,11 +752,152 @@ export const useFunction = () => {
         window.location.href = '/auth/login'
     }
 
+    const loadUser = async () =>{
+     const user  = await getData({url:'me',rtn:true})
+      if (user){
+          await CP.remove('user')
+          await CP.set('user',user)
+      }
+    }
 
+
+    const fileUpload = async (event, dataObject, dataModel,removeOld = true) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return toastAlert("error", "No file selected!", "Oops...!");
+        }
+
+        if(removeOld) {
+            if (dataObject[dataModel]) {
+                await fileRemove(dataObject, dataModel);
+            }
+        }
+        const formData = new FormData();
+        formData.append("file", file);
+
+        store.uploadLoading = true;
+        store.submitLoading = true;
+        try {
+            const readData = await httpReq({
+                method: "post",
+                url:'parents_mobil/upload',
+                data: formData,
+            });
+
+            if (parseInt(readData.status) === 2000) {
+                if (dataObject && dataModel) {
+                    dataObject[dataModel] = readData.result;
+                }
+                toastAlert(readData.status, readData.message || "File uploaded successfully");
+            } else {
+                toastAlert("error", readData.message || "Upload failed!", "Oops...!");
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+        } finally {
+            store.uploadLoading = false;
+            store.submitLoading = false;
+        }
+    };
+
+    const fileRemove = async (dataObject, dataModel,fileName= null) => {
+        try {
+            let file = fileName === null ?dataObject[dataModel]: fileName ;
+            await httpReq(
+                {
+                    method: "post",
+                    url: 'parents_mobil/file_remove' ,
+                    data: { file_name: file },
+                },
+                (readData) => {
+                    if (parseInt(readData.status) === 2000) {
+                        if(fileName === null){
+                            dataObject[dataModel] = null;
+                        }
+                        toastAlert('success', readData.message);
+                    } else {
+                        toastAlert('error', readData.message);
+                    }
+                }
+            );
+        } catch (error) {
+            toastAlert('error', error.message);
+        }
+    };
+
+
+
+    // ─── Profile API helpers ───────────────────────────────────────────────
+
+    /**
+     * Upload an image from a dataUrl (base64) string — converts to Blob and
+     * uses the existing /upload endpoint. Returns the server file path or null.
+     */
+    const uploadImageDataUrl = async (dataUrl) => {
+        if (!dataUrl) return null
+        try {
+            const res  = await fetch(dataUrl)
+            const blob = await res.blob()
+            const ext  = blob.type.split('/')[1] || 'jpg'
+            const file = new File([blob], `upload_${Date.now()}.${ext}`, { type: blob.type })
+            const formData = new FormData()
+            formData.append('file', file)
+            store.uploadLoading = true
+            const readData = await httpReq({ method: 'post', url: 'upload', data: formData })
+            if (parseInt(readData?.status) === 2000) {
+                return readData.result
+            } else {
+                toastAlert('error', readData?.message || 'Upload failed!')
+                return null
+            }
+        } catch (err) {
+            console.error('uploadImageDataUrl error:', err)
+            toastAlert('error', 'Image upload failed.')
+            return null
+        } finally {
+            store.uploadLoading = false
+        }
+    }
+
+    /** Update basic profile info (name, gender, address, photo) */
+    const updateProfile = async (data) => {
+        return await submitData({ url: 'profile/update', data, rtn: true })
+    }
+
+    /** Update NID info + images */
+    const updateNidInfo = async (data) => {
+        return await submitData({ url: 'profile/update-nid', data, rtn: true })
+    }
+
+    /** Send OTP to phone via SMS */
+    const sendPhoneOtp = async () => {
+        return await httpReq({ method: 'post', url: 'parents_mobil/profile/send-phone-otp' })
+    }
+
+    /** Verify phone OTP */
+    const verifyPhoneOtp = async (otp) => {
+        return await httpReq({ method: 'post', url: 'parents_mobil/profile/verify-phone-otp', data: { otp } })
+    }
+
+    /** Send OTP to email */
+    const sendEmailOtp = async () => {
+        return await httpReq({ method: 'post', url: 'parents_mobil/profile/send-email-otp' })
+    }
+
+    /** Verify email OTP */
+    const verifyEmailOtp = async (otp) => {
+        return await httpReq({ method: 'post', url: 'parents_mobil/profile/verify-email-otp', data: { otp } })
+    }
+
+    /** Change password */
+    const changePasswordApi = async (data) => {
+        return await httpReq({ method: 'post', url: 'parents_mobil/profile/change-password', data })
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
 
     return {
         baseUrl,
-        // returnData,
         getGeneralData,
         deleteData,
         getLocalFileUri,
@@ -763,7 +906,6 @@ export const useFunction = () => {
         can,
         urlGenerate,
         httpReq,
-        // getGeneralData,
         loadConfigurations,
         getDateTime,
         checkDuplicate,
@@ -777,7 +919,18 @@ export const useFunction = () => {
         updateUser,
         formatDate,
         getAuthToken,
-
-        logout
+        logout,
+        loadUser,
+        fileUpload,
+        fileRemove,
+        // Profile helpers
+        uploadImageDataUrl,
+        updateProfile,
+        updateNidInfo,
+        sendPhoneOtp,
+        verifyPhoneOtp,
+        sendEmailOtp,
+        verifyEmailOtp,
+        changePasswordApi,
     }
 }

@@ -4,17 +4,19 @@
       <!-- Sidebar Menu - One UI Style -->
       <ion-menu content-id="main-content" type="overlay" class="oneui-menu">
         <ion-header class="ion-no-border">
-          <div class="px-6 pt-10 pb-6 bg-white dark:bg-zinc-900">
+          <div class="px-6 pt-10 pb-6 bg-white dark:bg-zinc-900" @click="router.push('/tabs/profile')">
             <div class="flex items-center gap-4">
               <div class="relative">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                  <span class="text-2xl font-bold text-white">{{ getUserInitials() }}</span>
+                <div class="w-11 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <img class="w-11 h-12 rounded-2xl" v-if="user.photo" :src="LFA(user?.photo)">
+                  <span v-else class="text-2xl font-bold text-white">{{ getUserInitials() }}</span>
                 </div>
                 <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white dark:border-zinc-900"></div>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-base font-bold text-zinc-900 dark:text-zinc-50 truncate">{{ authStore.user?.name || 'Guest' }}</p>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ authStore.user?.email || 'user@example.com' }}</p>
+                <p class="text-base font-bold text-zinc-900 dark:text-zinc-50 truncate">{{ user?.name || 'Guest' }}</p>
+                <p v-if="user.phone" class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ user?.phone || '01*********' }}</p>
+                <p v-if="user?.email" class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ user?.email || 'user@example.com' }}</p>
               </div>
             </div>
           </div>
@@ -45,7 +47,7 @@
                   v-for="item in menuItems"
                   :key="item.path"
                   @click="navigate(item.path)"
-                  class="w-full flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 active:scale-[0.98] transition-all hover:shadow-md group"
+                  class="w-full flex items-center gap-3 p4 rounded-2xl bg-white m-2 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 active:scale-[0.98] transition-all hover:shadow-md group"
               >
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center" :class="item.bg">
                   <ion-icon :icon="item.icon" class="text-lg" :class="item.color" />
@@ -54,7 +56,7 @@
                 <span v-if="item.badge" class="px-2 py-0.5 text-[10px] font-bold rounded-full" :class="item.badgeClass">
                   {{ item.badge }}
                 </span>
-                <ion-icon :icon="chevronForwardOutline" class="text-sm text-zinc-300 dark:text-zinc-600" />
+                <ion-icon :icon="chevronForwardOutline" class="text-sm px-3 text-zinc-300 dark:text-zinc-600" />
               </button>
             </div>
 
@@ -66,14 +68,14 @@
                   v-for="item in settingsItems"
                   :key="item.path"
                   @click="navigate(item.path)"
-                  class="w-full flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 active:scale-[0.98] transition-all hover:shadow-md"
+                  class="w-full flex items-center gap-3 p-3 rounded-2xl bg-white m-2 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 active:scale-[0.98] transition-all hover:shadow-md"
               >
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center" :class="item.bg">
                   <ion-icon :icon="item.icon" class="text-lg" :class="item.color" />
                 </div>
                 <span class="flex-1 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $t(item.label) }}</span>
                 <span v-if="item.value" class="text-xs text-zinc-400 dark:text-zinc-500">{{ item.value }}</span>
-                <ion-icon :icon="chevronForwardOutline" class="text-sm text-zinc-300 dark:text-zinc-600" />
+                <ion-icon :icon="chevronForwardOutline" class="text-sm px-3 text-zinc-300 dark:text-zinc-600" />
               </button>
             </div>
 
@@ -86,7 +88,7 @@
                 <ion-icon :icon="logOutOutline" class="text-lg text-rose-600 dark:text-rose-400" />
               </div>
               <span class="flex-1 text-left text-sm font-bold text-rose-600 dark:text-rose-400">{{ $t('nav.logout') }}</span>
-              <ion-icon :icon="chevronForwardOutline" class="text-sm text-rose-300 dark:text-rose-600" />
+              <ion-icon :icon="chevronForwardOutline" class="text-sm px-3 text-rose-300 dark:text-rose-600" />
             </button>
 
             <!-- Version -->
@@ -101,7 +103,11 @@
           <ion-router-outlet />
 
           <!-- One UI Style Tab Bar -->
-          <ion-tab-bar slot="bottom" class="oneui-tabbar bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 h-[72px] shadow-lg shadow-black/5">
+          <ion-tab-bar
+            slot="bottom"
+            class="oneui-tabbar h-[60px] shadow-lg shadow-black/5 border-t border-zinc-100 dark:border-zinc-800"
+            :style="tabBarStyle"
+          >
             <ion-tab-button
                 v-for="tab in tabs"
                 :key="tab.tab"
@@ -127,7 +133,7 @@
                 style="--color: #9ca3af; --color-selected: #2563eb; --background: transparent; --background-focused: transparent;"
             >
               <div class="relative">
-                <ion-icon :icon="gridOutline" class="text-2xl transition-all duration-200" />
+                <ion-icon :icon="menuOutline" class="text-2xl transition-all duration-200" />
               </div>
               <ion-label class="text-[9px] font-medium mt-0.5">{{ $t('nav.menu') }}</ion-label>
             </ion-tab-button>
@@ -151,7 +157,7 @@ import {
   IonTabButton,
   IonRouterOutlet,
   IonLabel,
-  menuController,
+  menuController, onIonViewWillEnter,
 } from '@ionic/vue'
 
 import {
@@ -163,7 +169,7 @@ import {
   languageOutline,
   helpCircleOutline,
   informationCircleOutline,
-  shieldCheckmarkOutline,
+  personCircleOutline,
   logOutOutline,
   personOutline,
   calendarOutline,
@@ -175,19 +181,34 @@ import {
   heartOutline,
 } from 'ionicons/icons'
 
-import { useAuthStore } from '@/stores/auth'
 import { useLanguage } from '@/composables/useLanguage'
+import { useThemeStore } from '@/stores/themeStore'
 import { useRouter, useRoute } from 'vue-router'
-import { useFunction } from "@/composables/index.js"
+import {useCP, useFunction} from "@/composables/index.js"
 import { ref, computed } from 'vue'
-
-const authStore = useAuthStore()
+const CP = useCP();
 const router = useRouter()
 const route = useRoute()
 const { currentLocaleInfo } = useLanguage()
-const { logout } = useFunction()
+const { logout,LFA } = useFunction()
+const themeStore = useThemeStore()
 
-const currentTab = ref('dashboard')
+// Reactive dark mode: watches both the explicit theme choice and the OS media query
+const isDark = computed(() => {
+  if (themeStore.currentTheme === 'dark') return true
+  if (themeStore.currentTheme === 'light') return false
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+})
+
+const tabBarStyle = computed(() => ({
+  '--background': isDark.value ? '#18181b' : '#ffffff',
+  '--border': isDark.value ? '1px solid #27272a' : '1px solid #f4f4f5',
+}))
+const user = ref({})
+
+onIonViewWillEnter(async ()=>{
+  user.value = await CP.get('user')
+})
 
 // Quick Actions
 const quickActions = [
@@ -264,6 +285,15 @@ const menuItems = [
 // Settings Items
 const settingsItems = [
   {
+    path: '/tabs/profile',
+    label: 'nav.profile',
+    icon: personCircleOutline,
+    bg: 'bg-indigo-50 dark:bg-indigo-950/30',
+    color: 'text-indigo-600 dark:text-indigo-400',
+    badge: null,
+    badgeClass: ''
+  },
+  {
     path: '/settings',
     label: 'nav.settings',
     icon: settingsOutline,
@@ -300,16 +330,13 @@ const settingsItems = [
 // Tabs
 const tabs = [
   { tab: 'dashboard', href: '/tabs/dashboard', icon: gridOutline, label: 'nav.dashboard', badge: null },
-  { tab: 'children', href: '/tabs/children', icon: peopleOutline, label: 'nav.children', badge: '3' },
-  { tab: 'vaccination', href: '/tabs/vaccination', icon: medkitOutline, label: 'nav.vaccination', badge: '2' },
+  { tab: 'children', href: '/tabs/children', icon: peopleOutline, label: 'nav.children', badge: null },
+  { tab: 'vaccination', href: '/tabs/vaccination', icon: medkitOutline, label: 'nav.vaccination', badge: null },
+  { tab:'notifications',href:'/tabs/notifications', icon: notificationsOutline, label: 'nav.notifications', badge: '2' }
 ]
 
-const isActiveTab = (tab) => {
-  return route.path.includes(tab)
-}
-
 const getUserInitials = () => {
-  const name = authStore.user?.name || 'Guest'
+  const name = user?.value?.name || 'Guest'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
@@ -349,13 +376,6 @@ ion-tab-button[aria-selected="true"] ion-icon {
 ion-tab-button[aria-selected="true"] ion-label {
   color: #2563eb;
   font-weight: 600;
-}
-
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  .oneui-tabbar {
-    background: rgba(24, 24, 27, 0.95) !important;
-  }
 }
 
 /* Responsive */

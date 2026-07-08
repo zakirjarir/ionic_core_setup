@@ -3,5 +3,6 @@ export * from './useLanguage.js';
 export * from './useStore.js';
 
 export * from './useAlert.js';
+export * from './useForm.js';
 
 export * from './useCP.js';

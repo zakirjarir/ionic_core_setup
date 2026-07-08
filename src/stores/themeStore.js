@@ -1,64 +1,113 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { useCP } from '../composables/index.js'
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
+import {Capacitor} from '@capacitor/core'
+import {StatusBar, Style} from '@capacitor/status-bar'
+import {useCP} from '../composables'
+import {App} from '@capacitor/app'
 
 const STORAGE_KEY = 'app_theme'
 const VALID_THEMES = ['light', 'dark', 'system']
 
 export const useThemeStore = defineStore('theme', () => {
-  const currentTheme = ref('system')
-  const CP = useCP()
+    const currentTheme = ref('system')
+    const CP = useCP()
 
-  function applyTheme(theme) {
-    const root = document.documentElement
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
-    let isDark = false
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
-    if (theme === 'dark') {
-      isDark = true
-    } else if (theme === 'system') {
-      isDark = prefersDark
+    function isDarkTheme(theme) {
+        if (theme === 'dark') return true
+
+        if (theme === 'system') {
+            return mediaQuery.matches
+        }
+
+        return false
     }
 
-    if (isDark) {
-      root.classList.add('dark', 'ion-palette-dark')
-      root.setAttribute('data-theme', 'dark')
-    } else {
-      root.classList.remove('dark', 'ion-palette-dark')
-      root.setAttribute('data-theme', 'light')
+    function applyTheme(theme) {
+        const root = document.documentElement
+        const isDark = isDarkTheme(theme)
+
+        if (isDark) {
+            root.classList.add('dark', 'ion-palette-dark')
+            root.setAttribute('data-theme', 'dark')
+        } else {
+            root.classList.remove('dark', 'ion-palette-dark')
+            root.setAttribute('data-theme', 'light')
+        }
     }
-  }
 
-  async function setTheme(theme) {
-    if (!VALID_THEMES.includes(theme)) return
+    async function updateStatusBar() {
+        // Detect platform; skip on web
+        const platform = (Capacitor.getPlatform && Capacitor.getPlatform()) || 'web'
+        if (platform === 'web') return
 
-    currentTheme.value = theme
+        const isDark = document.documentElement.classList.contains('dark')
 
-    await CP.set(STORAGE_KEY, theme)
+        try {
+            // Android: control overlays and background color
+            if (platform === 'android') {
+                await StatusBar.setOverlaysWebView({ overlay: false })
 
-    applyTheme(theme)
-  }
+                await StatusBar.setBackgroundColor({
+                    color: isDark ? '#121212' : '#ffffff',
+                })
+            }
 
-  async function loadTheme() {
-    const result = await CP.get(STORAGE_KEY)
+            // Set icon/text color for both iOS and Android
+            await StatusBar.setStyle({
+                style: isDark ? Style.Dark : Style.Light,
+            })
+        } catch (error) {
+            console.error('StatusBar error:', error)
+        }
+    }
 
-    const saved = result || 'system'
+    async function setTheme(theme) {
+        if (!VALID_THEMES.includes(theme)) return
 
-    currentTheme.value = saved
+        currentTheme.value = theme
 
-    applyTheme(saved)
+        await CP.set(STORAGE_KEY, theme)
 
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (currentTheme.value === 'system') {
-        applyTheme('system')
-      }
+        applyTheme(theme)
+
+        await updateStatusBar()
+    }
+
+    async function loadTheme() {
+        const saved = (await CP.get(STORAGE_KEY)) || 'system'
+
+        currentTheme.value = saved
+
+        applyTheme(saved)
+
+        await updateStatusBar()
+    }
+
+    mediaQuery.addEventListener('change', async () => {
+        if (currentTheme.value === 'system') {
+            applyTheme('system')
+            await updateStatusBar()
+        }
     })
-  }
 
-  return {
-    currentTheme,
-    setTheme,
-    loadTheme,
-  }
+    // Ensure status bar updates when app becomes active again (native only)
+    if (Capacitor.getPlatform && Capacitor.getPlatform() !== 'web') {
+        App.addListener('appStateChange', async ({ isActive }) => {
+            if (isActive) {
+                await updateStatusBar()
+            }
+        })
+    }
+
+    return {
+        currentTheme,
+        setTheme,
+        loadTheme,
+        updateStatusBar,
+    }
+
+
 })

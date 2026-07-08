@@ -2,48 +2,86 @@ import { Preferences } from '@capacitor/preferences'
 
 export const useCP = () => {
 
-    // Save any value
     const set = async (key, value) => {
-        await Preferences.set({
-            key,
-            value: JSON.stringify(value),
-        })
+        try {
+            await Preferences.set({
+                key,
+                value: JSON.stringify(value)
+            })
+            return true
+        } catch (error) {
+            console.error(`CP SET ERROR [${key}]`, error)
+            return false
+        }
     }
 
-    // Get value
-    const get = async (key) => {
-        const { value } = await Preferences.get({ key })
-        return value ? JSON.parse(value) : null
+    const get = async (key, defaultValue = null) => {
+        try {
+            const { value } = await Preferences.get({ key })
+
+            if (
+                value === null ||
+                value === undefined ||
+                value === '' ||
+                value === 'undefined'
+            ) {
+                return defaultValue
+            }
+
+            return JSON.parse(value)
+        } catch (error) {
+            console.error(`CP GET ERROR [${key}]`, error)
+            return defaultValue
+        }
     }
 
-    // Update = same as set (overwrite)
     const update = async (key, value) => {
-        await set(key, value)
+        return await set(key, value)
     }
 
-    // Remove single key
     const remove = async (key) => {
-        await Preferences.remove({ key })
+        try {
+            await Preferences.remove({ key })
+            return true
+        } catch (error) {
+            console.error(`CP REMOVE ERROR [${key}]`, error)
+            return false
+        }
     }
 
-    // Clear all
     const clear = async () => {
-        await Preferences.clear()
+        try {
+            await Preferences.clear()
+            return true
+        } catch (error) {
+            console.error('CP CLEAR ERROR', error)
+            return false
+        }
     }
 
-    // Check exists
     const has = async (key) => {
         const { value } = await Preferences.get({ key })
-        return value !== null
+
+        return (
+            value !== null &&
+            value !== undefined &&
+            value !== '' &&
+            value !== 'undefined'
+        )
     }
 
-    // Return all methods
+    const keys = async () => {
+        const { keys } = await Preferences.keys()
+        return keys
+    }
+
     return {
         set,
         get,
         update,
         remove,
         clear,
-        has
+        has,
+        keys
     }
 }
