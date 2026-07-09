@@ -302,14 +302,6 @@ const settingsItems = [
     value: null
   },
   {
-    path: '/language',
-    label: 'nav.language',
-    icon: languageOutline,
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    color: 'text-amber-600 dark:text-amber-400',
-    value: currentLocaleInfo.nativeName
-  },
-  {
     path: '/support',
     label: 'nav.support',
     icon: helpCircleOutline,

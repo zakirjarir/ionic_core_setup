@@ -2,12 +2,14 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { SUPPORTED_LOCALES, applyLocaleToDocument, isRTL } from '@/i18n'
 import { useCP } from './useCP.js'
+import {useFunction} from "./useFunction.js";
 
 const STORAGE_KEY = 'app_locale'
 
 export function useLanguage() {
   const { locale } = useI18n()
   const CP = useCP()
+  const {submitData} = useFunction()
 
   const currentLocale = computed(() => locale.value)
 
@@ -26,6 +28,13 @@ export function useLanguage() {
     await CP.set(STORAGE_KEY, code)
 
     applyLocaleToDocument(code)
+
+    // Silently sync to server (fire-and-forget, won't block UI)
+    try {
+      await submitData({url:'profile/update-preferences' ,data:{locale:code}});
+    } catch (err) {
+      console.warn('[useLanguage] Failed to sync locale to server:', err?.message)
+    }
   }
 
   async function loadSavedLanguage() {

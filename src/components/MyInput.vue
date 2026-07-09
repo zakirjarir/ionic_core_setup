@@ -263,7 +263,11 @@
 
       <!-- Checkbox -->
       <template v-else-if="type === 'checkbox'">
-        <div class="py-3">
+        <div >
+          <span class="ml-0.5 mr-1 text-sm text-gray-900 dark:text-gray-100">
+              {{ label }}
+              <span v-if="required" class="text-danger-500 dark:text-danger-400 ml-0.5">*</span>
+            </span>
           <ion-checkbox
               ref="inputRef"
               :model-value="modelValue"
@@ -279,10 +283,6 @@
             }"
               :name="name"
           >
-            <span class="ml-2 text-sm text-gray-900 dark:text-gray-100">
-              {{ label }}
-              <span v-if="required" class="text-danger-500 dark:text-danger-400 ml-0.5">*</span>
-            </span>
           </ion-checkbox>
         </div>
       </template>
@@ -323,10 +323,6 @@
       <template v-else-if="type === 'toggle'">
         <div class="py-2">
           <ion-item lines="none" class="!pl-0 !pr-0">
-            <ion-label class="text-sm text-gray-900 dark:text-gray-100">
-              {{ label }}
-              <span v-if="required" class="text-danger-500 dark:text-danger-400 ml-0.5">*</span>
-            </ion-label>
             <ion-toggle
                 ref="inputRef"
                 :model-value="modelValue"
@@ -340,6 +336,10 @@
                 'has-store-error': hasStoreError
               }"
             />
+            <ion-label class="text-sm text-gray-900 dark:text-gray-100">
+              {{ label }}
+              <span v-if="required" class="text-danger-500 dark:text-danger-400 ml-0.5">*</span>
+            </ion-label>
           </ion-item>
         </div>
       </template>

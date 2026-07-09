@@ -1,5 +1,5 @@
 <template>
-  <ion-modal :is-open="isOpen" @did-dismiss="close" :initial-breakpoint="0.35" :breakpoints="[0, 0.35]" class="image-picker-modal env_margin_bottom">
+  <ion-modal :is-open="isOpen" @did-dismiss="close" :initial-breakpoint="0.40" :breakpoints="[0, 0.50]" class="image-picker-modal env_margin_bottom">
     <div class="px-4 pt-2 pb-6">
 
       <!-- Title -->
@@ -17,7 +17,7 @@
           style="--border-radius: 14px; --padding-top: 1rem; --padding-bottom: 1rem;"
           @click="takePhoto"
         >
-          <ion-icon :icon="cameraOutline" slot="start" />
+          <ion-icon class="px-2" :icon="cameraOutline" slot="start" />
           {{ $t('image_picker.take_photo') }}
         </ion-button>
 
@@ -30,7 +30,7 @@
           style="--border-radius: 14px; --padding-top: 1rem; --padding-bottom: 1rem;"
           @click="selectFromGallery"
         >
-          <ion-icon :icon="imagesOutline" slot="start" />
+          <ion-icon  class="px-2"  :icon="imagesOutline" slot="start" />
           {{ $t('image_picker.select_gallery') }}
         </ion-button>
 
@@ -40,7 +40,7 @@
           expand="block"
           fill="clear"
           color="danger"
-          class="m-0 font-semibold"
+          class="m-3 font-semibold"
           style="--border-radius: 14px; --padding-top: 1rem; --padding-bottom: 1rem;"
           @click="deleteImage"
         >

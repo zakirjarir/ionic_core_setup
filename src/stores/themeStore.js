@@ -2,7 +2,7 @@ import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import {Capacitor} from '@capacitor/core'
 import {StatusBar, Style} from '@capacitor/status-bar'
-import {useCP} from '../composables'
+import {useCP, useFunction} from '../composables'
 import {App} from '@capacitor/app'
 
 const STORAGE_KEY = 'app_theme'
@@ -11,6 +11,7 @@ const VALID_THEMES = ['light', 'dark', 'system']
 export const useThemeStore = defineStore('theme', () => {
     const currentTheme = ref('system')
     const CP = useCP()
+    const {submitData} = useFunction()
 
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -74,6 +75,13 @@ export const useThemeStore = defineStore('theme', () => {
         applyTheme(theme)
 
         await updateStatusBar()
+
+        // Silently sync to server (fire-and-forget, won't block UI)
+        try {
+            await submitData({url:'profile/update-preferences' ,data:{theme:theme}});
+        } catch (err) {
+            console.warn('[themeStore] Failed to sync theme to server:', err?.message)
+        }
     }
 
     async function loadTheme() {

@@ -103,6 +103,12 @@ const routes = [
     component: () => import('@/views/pages/ChildrenRegister.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/children-detail/:id',
+    name: 'ChildrenDetail',
+    component: () => import('@/views/pages/ChildrenDetailPage.vue'),
+    meta: { requiresAuth: true },
+  },
 
   // Privacy Policy (protected)
   {

@@ -28,22 +28,6 @@
               </button>
             </div>
 
-            <!-- Toggles -->
-            <div class="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
-              <div class="flex items-center gap-3">
-                <ion-icon :icon="notificationsOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
-                <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.push_notifications') }}</span>
-              </div>
-              <ion-toggle v-model="pushEnabled" color="primary" />
-            </div>
-
-            <div class="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
-              <div class="flex items-center gap-3">
-                <ion-icon :icon="mailOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
-                <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.email_notifications') }}</span>
-              </div>
-              <ion-toggle v-model="emailEnabled" color="primary" />
-            </div>
           </div>
         </div>
 
@@ -80,14 +64,6 @@
               <div class="flex items-center gap-3">
                 <ion-icon :icon="personOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                 <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.edit_profile') }}</span>
-              </div>
-              <ion-icon :icon="chevronForwardOutline" class="text-base text-zinc-400 dark:text-zinc-500" />
-            </div>
-
-            <div class="flex items-center justify-between pt-3.5 border-t border-zinc-100 dark:border-zinc-800 cursor-pointer active:opacity-70 transition-opacity">
-              <div class="flex items-center gap-3">
-                <ion-icon :icon="lockClosedOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
-                <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.change_password') }}</span>
               </div>
               <ion-icon :icon="chevronForwardOutline" class="text-base text-zinc-400 dark:text-zinc-500" />
             </div>
@@ -139,13 +115,14 @@
         </div>
 
         <!-- Logout -->
-        <button
+        <ion-button
           @click="handleLogout"
-          class="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-950/30 font-bold text-sm cursor-pointer active:scale-[0.98] transition-transform"
+          fill="outline"
+          color="danger"
         >
           <ion-icon :icon="logOutOutline" class="text-lg" />
           <span>{{ $t('settings.logout') }}</span>
-        </button>
+        </ion-button>
 
       </div>
     </ion-content>
