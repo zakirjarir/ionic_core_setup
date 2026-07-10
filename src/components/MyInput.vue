@@ -845,6 +845,25 @@ const validators: Validators = {
     return new Promise((resolve) => {
       checkUniqueDebounced(v, param, resolve)
     })
+  },
+
+  // date আজকের আগে হতে হবে (ভবিষ্যত তারিখ নয়)
+  before_today: (v: any) => {
+    if (!v) return true
+    const selected = new Date(v)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    selected.setHours(0, 0, 0, 0)
+    return selected < today || t('validation.before_today')
+  },
+
+  // date আজকের তারিখের চেয়ে বেশি নয় (আজ সহ অতীত)
+  not_future: (v: any) => {
+    if (!v) return true
+    const selected = new Date(v)
+    const today = new Date()
+    today.setHours(23, 59, 59, 999)
+    return selected <= today || t('validation.not_future')
   }
 }
 
@@ -1329,7 +1348,7 @@ html[data-theme="dark"] :deep(ion-searchbar.custom-searchbar) {
 }
 
 html[data-theme="dark"] :deep(ion-searchbar.custom-searchbar .searchbar-input-container) {
-  background: #111827;
+  background: #0c1017;
   border-color: #374151;
 }
 
@@ -1375,10 +1394,6 @@ html[data-theme="dark"] :deep(ion-searchbar.custom-searchbar .searchbar-clear-bu
 }
 
 /* Focus */
-:deep(ion-searchbar.custom-searchbar.searchbar-has-focus .searchbar-input-container) {
-  border-color: var(--ion-color-primary);
-  box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.1);
-}
 
 /* Error */
 :deep(ion-searchbar.custom-searchbar.has-error .searchbar-input-container) {
@@ -1448,4 +1463,11 @@ html[data-theme="dark"] :deep(ion-searchbar.custom-searchbar.disabled .searchbar
 
 
 
+</style>
+
+<style>
+html[data-theme="dark"] ion-searchbar.custom-searchbar {
+  --background: #141414;
+  --color: #f3f4f6;
+}
 </style>

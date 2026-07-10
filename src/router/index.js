@@ -104,6 +104,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/children-edit/:id',
+    name: 'ChildrenEdit',
+    component: () => import('@/views/pages/ChildrenRegister.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/children-detail/:id',
     name: 'ChildrenDetail',
     component: () => import('@/views/pages/ChildrenDetailPage.vue'),

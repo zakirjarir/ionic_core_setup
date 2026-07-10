@@ -61,7 +61,9 @@
     "url": "Enter a valid URL",
     "password": "Password must be at least 8 characters with uppercase, lowercase and a number",
     "match": "Values do not match",
-    "regex": "Invalid format"
+    "regex": "Invalid format",
+    "before_today": "Date of birth must be a past date, not today or future",
+    "not_future": "Date cannot be a future date"
   },
   "auth": {
     "welcome_back": "Welcome back",
@@ -247,6 +249,8 @@
     "village": "Village",
     "village_name": "Village / Area",
     "village_placeholder": "Village or area name",
+    "post_code": "Post Code",
+    "post_code_placeholder": "Enter post code",
     "address": "Detailed Address",
     "address_placeholder": "House no, road...",
     "no_children": "No children added yet",

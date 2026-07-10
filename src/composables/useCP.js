@@ -75,6 +75,14 @@ export const useCP = () => {
         return keys
     }
 
+    /**
+     * একটা CP key এ save করা draft photo মুছে দেয়
+     * @param {string} draftKey - CP এর key (যেমন 'child_register_draft_photo')
+     */
+    const removeDraftPhoto = async (draftKey) => {
+        return await remove(draftKey)
+    }
+
     return {
         set,
         get,
@@ -82,6 +90,7 @@ export const useCP = () => {
         remove,
         clear,
         has,
-        keys
+        keys,
+        removeDraftPhoto,
     }
 }

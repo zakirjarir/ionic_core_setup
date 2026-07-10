@@ -21,8 +21,11 @@ export const useFunction = () => {
 
     const LFA = ($path) => {
         if (!$path) {return null}
+        // base64 dataUrl হলে সরাসরি return করো
+        if (typeof $path === 'string' && $path.startsWith('data:')) {
+            return $path
+        }
         return `${store.mainUrl}/${$path}`
-
     }
 
     const getDateTime = ()=> {
@@ -729,14 +732,25 @@ export const useFunction = () => {
         if (!dateString) return '-';
 
         try {
-            return new Intl.DateTimeFormat('bn-BD', {
+            const date = new Date(dateString);
+
+            const hasTime =
+                dateString.includes('T') ||
+                /\d{2}:\d{2}/.test(dateString);
+
+            const options = {
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).format(new Date(dateString));
+                day: 'numeric'
+            };
+
+            if (hasTime) {
+                options.hour = '2-digit';
+                options.minute = '2-digit';
+                options.hour12 = true;
+            }
+
+            return new Intl.DateTimeFormat('bn-BD', options).format(date);
         } catch (e) {
             return dateString;
         }
@@ -843,7 +857,7 @@ export const useFunction = () => {
             const formData = new FormData()
             formData.append('file', file)
             store.uploadLoading = true
-            const readData = await httpReq({ method: 'post', url: 'upload', data: formData })
+            const readData = await httpReq({ method: 'post', url: 'parents_mobil/upload', data: formData })
             if (parseInt(readData?.status) === 2000) {
                 return readData.result
             } else {

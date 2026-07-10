@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <z-header :title="t('children.add_child')"/>
+    <z-header :title="isEditMode ? t('children.edit_child') : t('children.add_child')"/>
 
     <ion-content class="bg-[#F5F6FA] dark:bg-zinc-950">
       <div class="max-w-md mx-auto px-4 py-4">
@@ -42,7 +42,9 @@
             <div class="p-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col items-center">
               <div class="relative">
                 <div class="w-28 h-28 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-950/30 dark:to-purple-950/30 flex items-center justify-center border-4 border-white dark:border-zinc-800 shadow-lg">
-                  <img v-if="store.formData.photo" :src="store.formData.photo" class="w-full h-full rounded-full object-cover" alt="Profile photo" />
+                  <img v-if="photoPreview || store.formData.photo"
+                       :src="photoPreview || LFA(store.formData.photo)"
+                       class="w-full h-full rounded-full object-cover" alt="Profile photo" />
                   <ion-icon v-else :icon="personCircleOutline" class="text-6xl text-zinc-300 dark:text-zinc-600" />
                 </div>
                 <ion-button @click="showImagePicker = true" color="primary" shape="round" class="absolute bottom-0 right-0 m-0"
@@ -77,7 +79,7 @@
                     name="dob"
                     :label="t('children.date_of_birth')"
                     :required="true"
-                    validate="required"
+                    validate="required|before_today"
                 />
 
                 <my-input
@@ -223,9 +225,9 @@
               />
 
               <my-input v-if="!store.formData.village_id"
-                  v-model="store.formData.village_name"
-                  :label="t('children.village_name')"
-                  :placeholder="t('children.village_placeholder')"
+                  v-model="store.formData.post_code"
+                  :label="t('children.post_code')"
+                  :placeholder="t('children.post_code_placeholder')"
                   validate="min:2|max:100"
               />
 
@@ -251,7 +253,9 @@
               <div class="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
                 <div class="flex items-center gap-4 mb-4">
                   <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-950/30 dark:to-purple-950/30 flex items-center justify-center border-2 border-white dark:border-zinc-700 shadow">
-                    <img v-if="store.formData.photo" :src="store.formData.photo" class="w-full h-full rounded-full object-cover" alt="Profile photo" />
+                    <img v-if="photoPreview || store.formData.photo"
+                         :src="photoPreview || LFA(store.formData.photo)"
+                         class="w-full h-full rounded-full object-cover" alt="Profile photo" />
                     <ion-icon v-else :icon="personCircleOutline" class="text-4xl text-zinc-400 dark:text-zinc-500" />
                   </div>
                   <div class="flex-1 min-w-0">
@@ -298,7 +302,8 @@
     <!-- Modals -->
     <ImagePickerModal
         v-model:is-open="showImagePicker"
-        :has-image="!!store.formData.photo"
+        :has-image="!!(photoPreview || store.formData.photo)"
+        :current-image-path="store.formData.photo"
         @image-selected="handleImageSelected"
         @image-deleted="handleImageDeleted"
         :edit="true"
@@ -312,7 +317,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   IonPage, IonContent, IonButton, IonIcon, toastController, onIonViewWillEnter
 } from '@ionic/vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import MyInput from '@/components/MyInput.vue'
 import ImagePickerModal from '@/components/ImagePickerModal.vue'
@@ -320,16 +325,18 @@ import {
   arrowBackOutline, arrowForwardOutline, checkmarkOutline, checkmarkCircleOutline,
   personCircleOutline, cameraOutline, lockClosedOutline
 } from 'ionicons/icons'
-import {useForm, useFunction, useStore} from "@/composables/index.js"
+import {useForm, useFunction, useStore, useCP} from "@/composables/index.js"
 import ZHeader from "@/components/ZHeader.vue"
 
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 
 const store = useStore()
 const {validate} = useForm()
 
-const { getGeneralData,submitData } = useFunction()
+const { getGeneralData, submitData, getData, fileRemove, LFA } = useFunction()
+const CP = useCP()
 
 const steps = computed(() => [
   t('children.step_general'),
@@ -339,9 +346,10 @@ const steps = computed(() => [
 
 const currentStep = ref(0)
 const showImagePicker = ref(false)
+const photoPreview = ref(null) // local dataUrl preview
+const CP_DRAFT_KEY = 'child_register_draft_photo'
 
-
-
+const isEditMode = computed(() => !!route.params.id)
 
 const progressWidth = computed(() => (currentStep.value / (steps.value.length - 1)) * 100)
 
@@ -368,7 +376,7 @@ const summaryRows = computed(() => {
       { label: t('children.district'), value: getDistrictLabel(store.formData.district_id) || '--' },
       { label: t('children.upazila'), value: getUpazilaLabel(store.formData.upazila_id) || '--' },
       { label: t('children.union'), value: getUnionLabel(store.formData.union_id) || '--' },
-      { label: t('children.village_name'), value: store.formData.village_name || '--' },
+      { label: t('children.post_code'), value: store.formData.post_code || '--' },
       { label: t('children.address'), value: store.formData.address || '--' }
   )
 
@@ -425,12 +433,27 @@ const getUnionLabel = (id) => {
 
 
 // Image handlers
-const handleImageSelected = (imageData) => {
-  store.formData.photo = imageData
+const handleImageSelected = async ({ serverPath, dataUrl }) => {
+  // server path form data তে save করো
+  store.formData.photo = serverPath
+  // local preview এর জন্য dataUrl রাখো
+  photoPreview.value = dataUrl
+  if (!isEditMode.value) {
+    // submitForm পর্যন্ত CP তে draft রাখো
+    await CP.set(CP_DRAFT_KEY, { serverPath, dataUrl })
+  }
 }
 
-const handleImageDeleted = () => {
+const handleImageDeleted = async () => {
+  // server থেকে file delete করো
+  if (store.formData.photo) {
+    await fileRemove(null, null, store.formData.photo)
+  }
   store.formData.photo = null
+  photoPreview.value = null
+  if (!isEditMode.value) {
+    await CP.remove(CP_DRAFT_KEY)
+  }
 }
 
 // Validation
@@ -453,12 +476,18 @@ const goToNext = async () => {
 }
 const submitForm = async () => {
   try {
+    const url = isEditMode.value ? `children/${route.params.id}/update` : 'create_children'
     const success = await submitData({
-      url: 'create_children',
+      url: url,
       data: { ...store.formData },
-      reset: true,
+      reset: !isEditMode.value,
     })
     if (success) {
+      if (!isEditMode.value) {
+        // success হলে CP draft মুছে দাও
+        await CP.remove(CP_DRAFT_KEY)
+      }
+      photoPreview.value = null
       currentStep.value = 0
       router.back()
     }
@@ -469,9 +498,92 @@ const submitForm = async () => {
 
 
 // Lifecycle
-onIonViewWillEnter(() => {
-  getGeneralData(['divisions'])
-  store.formData = { ...store.formData, birth_type: 'normal_delivery', premature: false, disabled: false }
+onIonViewWillEnter(async () => {
+  if (isEditMode.value) {
+    const childId = Number(route.params.id)
+    try {
+      store.loading = true
+      const list = await getData({ url: 'children', rtn: true })
+      if (list) {
+        const found = list.find(c => c.id === childId)
+        if (found) {
+          store.formData = {
+            name: found.name,
+            name_bn: found.name_bn,
+            nickname: found.nickname,
+            dob: found.dob,
+            gender: found.gender,
+            blood_group: found.blood_group,
+            birth_weight_kg: found.birth_weight_kg,
+            birth_type: found.birth_type,
+            premature: !!found.premature,
+            disabled: !!found.disabled,
+            disability_note: found.disability_note,
+            allergies: found.allergies,
+            medical_conditions: found.medical_conditions,
+            division_id: found.division_id,
+            district_id: found.district_id,
+            upazila_id: found.upazila_id,
+            union_id: found.union_id,
+            village_id: found.village_id,
+            post_code: found.post_code,
+            address: found.address,
+            photo: found.photo
+          }
+          if (found.photo) {
+            photoPreview.value = LFA(found.photo)
+          } else {
+            photoPreview.value = null
+          }
+
+          // Fetch Address Hierarchy
+          await getGeneralData({
+            divisions: {},
+            districts: { division_id: found.division_id },
+            upazilas: { district_id: found.district_id },
+            unions: { upazila_id: found.upazila_id },
+            villages: { union_id: found.union_id }
+          })
+        }
+      }
+    } catch (err) {
+      console.error("Error loading child for edit:", err)
+    } finally {
+      store.loading = false
+    }
+  } else {
+    getGeneralData(['divisions'])
+    store.formData = {
+      name: '',
+      name_bn: '',
+      nickname: '',
+      dob: '',
+      gender: '',
+      blood_group: '',
+      birth_weight_kg: '',
+      birth_type: 'normal_delivery',
+      premature: false,
+      disabled: false,
+      disability_note: '',
+      allergies: '',
+      medical_conditions: '',
+      division_id: '',
+      district_id: '',
+      upazila_id: '',
+      union_id: '',
+      village_id: '',
+      post_code: '',
+      address: '',
+      photo: null
+    }
+    photoPreview.value = null
+    // CP তে save করা draft photo restore করো
+    const draft = await CP.get(CP_DRAFT_KEY)
+    if (draft?.serverPath) {
+      store.formData.photo = draft.serverPath
+      photoPreview.value = draft.dataUrl || null
+    }
+  }
 })
 </script>
 

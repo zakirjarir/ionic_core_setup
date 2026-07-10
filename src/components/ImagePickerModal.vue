@@ -53,12 +53,15 @@
 </template>
 
 <script setup>
-import { IonModal, IonButton, IonIcon, toastController } from '@ionic/vue'
+import { ref } from 'vue'
+import { IonModal, IonButton, IonIcon, IonSpinner, toastController } from '@ionic/vue'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import { cameraOutline, imagesOutline, trashOutline } from 'ionicons/icons'
 import { useI18n } from 'vue-i18n'
+import { useFunction } from '@/composables/useFunction.js'
 
 const { t } = useI18n()
+const { uploadImageDataUrl, fileRemove } = useFunction()
 
 const props = defineProps({
   isOpen: {
@@ -69,6 +72,11 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  // বর্তমানে যে image টা আছে তার server path (delete করার জন্য)
+  currentImagePath: {
+    type: String,
+    default: null
+  },
   edit:{
     type: Boolean,
     default: false
@@ -77,8 +85,34 @@ const props = defineProps({
 
 const emit = defineEmits(['update:isOpen', 'image-selected', 'image-deleted'])
 
+const uploading = ref(false)
+
 const close = () => {
   emit('update:isOpen', false)
+}
+
+/**
+ * Camera / Gallery থেকে dataUrl নিয়ে server এ upload করে
+ * আগের image থাকলে আগে সেটা server থেকে মুছে দেয়
+ * server response এর file path emit করে
+ */
+const handleImageCapture = async (dataUrl) => {
+  if (!dataUrl) return
+  uploading.value = true
+  close()
+  try {
+    // আগের image থাকলে আগে server থেকে remove করো
+    if (props.currentImagePath) {
+      await fileRemove(null, null, props.currentImagePath)
+    }
+    const serverPath = await uploadImageDataUrl(dataUrl)
+    if (serverPath) {
+      // server path + local dataUrl দুটো পাঠাই
+      emit('image-selected', { serverPath, dataUrl })
+    }
+  } finally {
+    uploading.value = false
+  }
 }
 
 const takePhoto = async () => {
@@ -89,8 +123,7 @@ const takePhoto = async () => {
       resultType: CameraResultType.DataUrl,
       source: CameraSource.Camera,
     })
-    emit('image-selected', image.dataUrl)
-    close()
+    await handleImageCapture(image.dataUrl)
   } catch (err) {
     if (err.message !== 'User cancelled photos app') {
       const toast = await toastController.create({
@@ -112,8 +145,7 @@ const selectFromGallery = async () => {
       resultType: CameraResultType.DataUrl,
       source: CameraSource.Photos,
     })
-    emit('image-selected', image.dataUrl)
-    close()
+    await handleImageCapture(image.dataUrl)
   } catch (err) {
     if (err.message !== 'User cancelled photos app') {
       const toast = await toastController.create({
@@ -127,7 +159,11 @@ const selectFromGallery = async () => {
   }
 }
 
-const deleteImage = () => {
+const deleteImage = async () => {
+  // যদি server এ আগের image থাকে সেটা delete করো
+  if (props.currentImagePath) {
+    await fileRemove(null, null, props.currentImagePath)
+  }
   emit('image-deleted')
   close()
 }
