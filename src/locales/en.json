@@ -308,7 +308,8 @@
     "notes": "Notes",
     "mark_done": "Mark as Done",
     "no_vaccinations": "No vaccinations scheduled",
-    "no_vaccinations_sub": "Add children to see vaccination schedules"
+    "no_vaccinations_sub": "Add children to see vaccination schedules",
+    "all": "All"
   },
   "notifications": {
     "title": "Alerts",
