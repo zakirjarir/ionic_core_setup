@@ -22,6 +22,9 @@ export const useFunction = () => {
 
 
     const LFA = ($path) => {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            return '/images/offline.png'
+        }
         if (!$path) {return null}
         // base64 dataUrl হলে সরাসরি return করো
         if (typeof $path === 'string' && $path.startsWith('data:')) {
