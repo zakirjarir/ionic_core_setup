@@ -8,7 +8,7 @@
       </template>
     </z-header>
 
-    <ion-content class="bg-[#F8F9FD] dark:bg-zinc-950">
+    <ion-content>
       <div class="max-w-md mx-auto px-4 py-5 space-y-5">
 
         <!-- Search and Gender Filter Bar -->
@@ -36,11 +36,11 @@
         <!-- store.loading State -->
         <div v-if="store.loading" class="flex flex-col items-center justify-center py-20 gap-3">
           <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ t('common.store.loading') }}</p>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ t('common.loading') }}</p>
         </div>
 
         <!-- Empty / Search No Results State -->
-        <div v-else-if="filteredChildren.length === 0" class="flex flex-col items-center justify-center py-16 px-6 text-center gap-4 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 p-8 shadow-sm">
+        <div v-else-if="filteredChildren.length === 0" class="flex flex-col items-center justify-center py-16 px-6 text-center gap-4 bg-transparent p-8">
           <div class="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 animate-pulse">
             <ion-icon :icon="searchQuery ? searchOutline : peopleOutline" class="text-3xl" />
           </div>
@@ -106,12 +106,6 @@
 
             <!-- Action buttons -->
             <div class="flex items-center gap-1" @click.stop>
-              <button
-                @click="router.push('/children-edit/' + child.id)"
-                class="w-8 h-8 rounded-xl flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:text-indigo-600 dark:hover:text-indigo-400 border-0 transition-colors"
-              >
-                <ion-icon :icon="createOutline" class="text-sm" />
-              </button>
               <button
                 @click="goToDetail(child)"
                 class="w-8 h-8 rounded-xl flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:text-indigo-600 dark:hover:text-indigo-400 border-0 transition-colors"

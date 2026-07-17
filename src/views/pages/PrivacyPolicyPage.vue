@@ -3,7 +3,7 @@
     <z-header :title="$t('privacy.title')"/>
 
 
-    <ion-content class="bg-zinc-50 dark:bg-zinc-950">
+    <ion-content>
       <div class="p-4 flex flex-col gap-5">
         <div class="flex flex-col items-center text-center py-4 gap-2">
           <ion-icon :icon="shieldCheckmarkOutline" class="text-5xl text-indigo-600 dark:text-indigo-400" />

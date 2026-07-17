@@ -8,7 +8,7 @@
       </template>
     </z-header>
 
-    <ion-content class="bg-zinc-50 dark:bg-zinc-950">
+    <ion-content>
       <!-- Segment -->
       <div class="px-4 pt-3 pb-1">
         <ion-segment v-model="activeSegment" class="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-0.5">

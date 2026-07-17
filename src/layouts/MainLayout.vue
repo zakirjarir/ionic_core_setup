@@ -1,98 +1,91 @@
 <template>
   <ion-page>
     <ion-split-pane content-id="main-content">
-      <!-- Sidebar Menu - One UI Style -->
+      <!-- Sidebar Menu -->
       <ion-menu content-id="main-content" type="overlay" class="oneui-menu">
-        <ion-header class="ion-no-border">
-          <div class="px-6 pt-10 pb-6 bg-white dark:bg-zinc-900" @click="router.push('/tabs/profile')">
-            <div class="flex items-center gap-4">
-              <div class="relative">
-                <div class="w-11 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                  <img class="w-11 h-12 rounded-2xl" v-if="user.photo" :src="LFA(user?.photo)">
-                  <span v-else class="text-2xl font-bold text-white">{{ getUserInitials() }}</span>
+        <div class="sidebar-header-bg px-5 pt-12 pb-5">
+          <div
+            class="flex items-center gap-4 cursor-pointer active:opacity-80 transition-opacity"
+            @click="navigate('/profile')"
+          >
+            <div class="relative flex-shrink-0">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-0.5 shadow-lg shadow-indigo-500/30">
+                <div class="sidebar-avatar-inner w-full h-full rounded-[14px] overflow-hidden flex items-center justify-center">
+                  <img v-if="user.photo" :src="LFA(user?.photo)" class="w-full h-full object-cover" />
+                  <span v-else class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-purple-500">{{ getUserInitials() }}</span>
                 </div>
-                <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white dark:border-zinc-900"></div>
               </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-base font-bold text-zinc-900 dark:text-zinc-50 truncate">{{ user?.name || 'Guest' }}</p>
-                <p v-if="user.phone" class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ user?.phone || '01*********' }}</p>
-                <p v-if="user?.email" class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ user?.email || 'user@example.com' }}</p>
-              </div>
+              <div class="sidebar-avatar-dot absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 shadow-sm"></div>
             </div>
+            <div class="flex-1 min-w-0">
+              <p class="sidebar-name-text text-base font-black truncate">{{ user?.name || 'Guest User' }}</p>
+              <p class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 mt-0.5 truncate">
+                {{ user?.phone || user?.email || 'Health Worker' }}
+              </p>
+              <span class="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                Online
+              </span>
+            </div>
+            <ion-icon :icon="chevronForwardOutline" class="text-sm text-zinc-300 dark:text-zinc-600 flex-shrink-0" />
           </div>
-        </ion-header>
+        </div>
 
-        <ion-content class="bg-zinc-50 dark:bg-zinc-950">
-          <div class="p-4">
-            <!-- Quick Actions -->
-            <div class="grid grid-cols-4 gap-2 mb-6">
-              <button
-                  v-for="action in quickActions"
-                  :key="action.label"
-                  @click="navigate(action.path)"
-                  class="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 active:scale-95 transition-all hover:shadow-md"
-              >
-                <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="action.bg">
-                  <ion-icon :icon="action.icon" class="text-xl" :class="action.color" />
-                </div>
-                <span class="text-[10px] font-medium text-zinc-600 dark:text-zinc-400">{{ $t(action.label) }}</span>
-              </button>
+        <ion-content>
+          <div class="px-4 py-4 space-y-5">
+
+            <!-- Quick Actions Grid -->
+            <div>
+              <p class="sidebar-section-label">{{ $t('nav.quick_access') || 'Quick Access' }}</p>
+              <div class="grid grid-cols-4 gap-2">
+                <button
+                    v-for="action in quickActions"
+                    :key="action.label"
+                    @click="navigate(action.path)"
+                    class="flex flex-col items-center gap-1.5 py-3 px-1 rounded-2xl cursor-pointer active:scale-95 transition-transform"
+                >
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center">
+                    <ion-icon :icon="action.icon" class="text-2xl" :class="action.color" />
+                  </div>
+                  <span class="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 text-center leading-tight truncate w-full px-0.5">{{ $t(action.label) }}</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Menu Items -->
-            <div class="space-y-1">
-              <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-wider px-3 mb-2">Menu</p>
-
-              <button
-                  v-for="item in menuItems"
-                  :key="item.path"
-                  @click="navigate(item.path)"
-                  class="w-full flex items-center gap-3 p4 rounded-2xl bg-white m-2 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 active:scale-[0.98] transition-all hover:shadow-md group"
-              >
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center" :class="item.bg">
-                  <ion-icon :icon="item.icon" class="text-lg" :class="item.color" />
-                </div>
-                <span class="flex-1 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $t(item.label) }}</span>
-                <span v-if="item.badge" class="px-2 py-0.5 text-[10px] font-bold rounded-full" :class="item.badgeClass">
-                  {{ item.badge }}
-                </span>
-                <ion-icon :icon="chevronForwardOutline" class="text-sm px-3 text-zinc-300 dark:text-zinc-600" />
-              </button>
-            </div>
-
-            <!-- Settings Section -->
-            <div class="space-y-1 mt-4">
-              <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-wider px-3 mb-2">Settings</p>
-
-              <button
-                  v-for="item in settingsItems"
-                  :key="item.path"
-                  @click="navigate(item.path)"
-                  class="w-full flex items-center gap-3 p-3 rounded-2xl bg-white m-2 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 active:scale-[0.98] transition-all hover:shadow-md"
-              >
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center" :class="item.bg">
-                  <ion-icon :icon="item.icon" class="text-lg" :class="item.color" />
-                </div>
-                <span class="flex-1 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $t(item.label) }}</span>
-                <span v-if="item.value" class="text-xs text-zinc-400 dark:text-zinc-500">{{ item.value }}</span>
-                <ion-icon :icon="chevronForwardOutline" class="text-sm px-3 text-zinc-300 dark:text-zinc-600" />
-              </button>
+            <!-- Main Navigation -->
+            <div>
+              <p class="sidebar-section-label">{{ $t('nav.main_menu') || 'Navigation' }}</p>
+              <div class="space-y-1.5">
+                <button
+                    v-for="item in allMenuItems"
+                    :key="item.path"
+                    @click="navigate(item.path)"
+                    class="sidebar-nav-item"
+                >
+                  <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <ion-icon :icon="item.icon" class="text-[20px]" :class="item.color" />
+                  </div>
+                  <span class="flex-1 text-left text-[13px] font-semibold text-zinc-700 dark:text-zinc-200">{{ $t(item.label) }}</span>
+                  <span v-if="item.badge" class="px-2 py-0.5 text-[9px] font-extrabold rounded-full flex-shrink-0" :class="item.badgeClass">{{ item.badge }}</span>
+                  <ion-icon :icon="chevronForwardOutline" class="text-[11px] text-zinc-300 dark:text-zinc-600 flex-shrink-0" />
+                </button>
+              </div>
             </div>
 
             <!-- Logout -->
             <button
                 @click="handleLogout"
-                class="w-full flex items-center gap-3 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-950/30 mt-6 active:scale-[0.98] transition-all hover:shadow-md"
+                class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/30 border border-rose-100 dark:border-rose-900/30 cursor-pointer active:scale-[0.98] transition-all"
             >
-              <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center">
-                <ion-icon :icon="logOutOutline" class="text-lg text-rose-600 dark:text-rose-400" />
+              <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center flex-shrink-0">
+                <ion-icon :icon="logOutOutline" class="text-[17px] text-rose-600 dark:text-rose-400" />
               </div>
-              <span class="flex-1 text-left text-sm font-bold text-rose-600 dark:text-rose-400">{{ $t('nav.logout') }}</span>
-              <ion-icon :icon="chevronForwardOutline" class="text-sm px-3 text-rose-300 dark:text-rose-600" />
+              <span class="flex-1 text-left text-[13px] font-semibold text-rose-600 dark:text-rose-400">{{ $t('nav.logout') }}</span>
+              <ion-icon :icon="chevronForwardOutline" class="text-[11px] text-rose-300 dark:text-rose-700" />
             </button>
 
             <!-- Version -->
-            <p class="text-center text-[10px] text-zinc-400 dark:text-zinc-600 mt-6">One UI 8.5 • Version 2.4.1</p>
+            <p class="text-center text-[10px] text-zinc-300 dark:text-zinc-600 pt-1">BIVEEC • v2.4.1</p>
           </div>
         </ion-content>
       </ion-menu>
@@ -102,40 +95,34 @@
         <ion-tabs>
           <ion-router-outlet />
 
-          <!-- One UI Style Tab Bar -->
-          <ion-tab-bar
-            slot="bottom"
-            class="oneui-tabbar h-[60px] shadow-lg shadow-black/5 border-t border-zinc-100 dark:border-zinc-800"
-            :style="tabBarStyle"
-          >
+          <!-- Tab Bar -->
+          <ion-tab-bar slot="bottom" class="modern-tabbar">
             <ion-tab-button
                 v-for="tab in tabs"
                 :key="tab.tab"
                 :tab="tab.tab"
                 :href="tab.href"
-                class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1"
-                style="--color: #9ca3af; --color-selected: #2563eb; --background: transparent; --background-focused: transparent;"
+                class="tab-btn"
             >
-              <div class="relative">
-                <ion-icon :icon="tab.icon" class="text-2xl transition-all duration-200" />
-                <span v-if="tab.badge" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center shadow-md">
-                  {{ tab.badge }}
-                </span>
+              <div class="tab-content">
+                <div class="tab-icon-wrapper">
+                  <ion-icon :icon="tab.icon" class="tab-icon" />
+                  <span v-if="tab.badge" class="tab-badge">{{ tab.badge }}</span>
+                </div>
+                <ion-label class="tab-label">{{ $t(tab.label) }}</ion-label>
               </div>
-              <ion-label class="text-[9px] font-medium mt-0.5">{{ $t(tab.label) }}</ion-label>
-
+              <div class="tab-indicator"></div>
             </ion-tab-button>
 
             <!-- Menu Button -->
-            <ion-tab-button
-                @click="menuController.open()"
-                class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1"
-                style="--color: #9ca3af; --color-selected: #2563eb; --background: transparent; --background-focused: transparent;"
-            >
-              <div class="relative">
-                <ion-icon :icon="menuOutline" class="text-2xl transition-all duration-200" />
+            <ion-tab-button tab="menu" class="tab-btn" @click.prevent="menuController.open()">
+              <div class="tab-content">
+                <div class="tab-icon-wrapper">
+                  <ion-icon :icon="menuOutline" class="tab-icon" />
+                </div>
+                <ion-label class="tab-label">{{ $t('nav.menu') }}</ion-label>
               </div>
-              <ion-label class="text-[9px] font-medium mt-0.5">{{ $t('nav.menu') }}</ion-label>
+              <div class="tab-indicator"></div>
             </ion-tab-button>
           </ion-tab-bar>
         </ion-tabs>
@@ -157,7 +144,8 @@ import {
   IonTabButton,
   IonRouterOutlet,
   IonLabel,
-  menuController, onIonViewWillEnter,
+  menuController,
+  onIonViewWillEnter,
 } from '@ionic/vue'
 
 import {
@@ -166,90 +154,71 @@ import {
   medkitOutline,
   menuOutline,
   settingsOutline,
-  languageOutline,
   helpCircleOutline,
   informationCircleOutline,
   personCircleOutline,
   logOutOutline,
-  personOutline,
   calendarOutline,
   notificationsOutline,
   homeOutline,
   chevronForwardOutline,
-  timeOutline,
-  cloudOutline,
-  heartOutline,
+  sparklesOutline,
 } from 'ionicons/icons'
 
-import { useLanguage } from '@/composables/useLanguage'
-import { useThemeStore } from '@/stores/themeStore'
-import { useRouter, useRoute } from 'vue-router'
-import {useCP, useFunction} from "@/composables/index.js"
-import { ref, computed } from 'vue'
-const CP = useCP();
+import { useRouter } from 'vue-router'
+import { useCP, useFunction } from "@/composables/index.js"
+import { ref } from 'vue'
+
+const CP = useCP()
 const router = useRouter()
-const route = useRoute()
-const { currentLocaleInfo } = useLanguage()
-const { logout,LFA } = useFunction()
-const themeStore = useThemeStore()
+const { logout, LFA } = useFunction()
 
-// Reactive dark mode: watches both the explicit theme choice and the OS media query
-const isDark = computed(() => {
-  if (themeStore.currentTheme === 'dark') return true
-  if (themeStore.currentTheme === 'light') return false
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-})
-
-const tabBarStyle = computed(() => ({
-  '--background': isDark.value ? '#18181b' : '#ffffff',
-  '--border': isDark.value ? '1px solid #27272a' : '1px solid #f4f4f5',
-}))
 const user = ref({})
 
-onIonViewWillEnter(async ()=>{
+onIonViewWillEnter(async () => {
   user.value = await CP.get('user')
 })
 
-// Quick Actions
+// Quick Actions (top icon grid)
 const quickActions = [
+  {
+    path: '/tabs/dashboard',
+    label: 'nav.dashboard',
+    icon: homeOutline,
+    bg: 'bg-indigo-100 dark:bg-indigo-950/40',
+    color: 'text-indigo-600 dark:text-indigo-400'
+  },
   {
     path: '/tabs/children',
     label: 'nav.children',
     icon: peopleOutline,
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
+    bg: 'bg-blue-100 dark:bg-blue-950/40',
     color: 'text-blue-600 dark:text-blue-400'
   },
   {
     path: '/tabs/vaccination',
     label: 'nav.vaccination',
     icon: medkitOutline,
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    bg: 'bg-emerald-100 dark:bg-emerald-950/40',
     color: 'text-emerald-600 dark:text-emerald-400'
   },
   {
-    path: '/tabs/calendar',
-    label: 'nav.calendar',
-    icon: calendarOutline,
-    bg: 'bg-purple-50 dark:bg-purple-950/30',
-    color: 'text-purple-600 dark:text-purple-400'
-  },
-  {
-    path: '/notifications',
+    path: '/tabs/notifications',
     label: 'nav.notifications',
     icon: notificationsOutline,
-    bg: 'bg-rose-50 dark:bg-rose-950/30',
+    bg: 'bg-rose-100 dark:bg-rose-950/40',
     color: 'text-rose-600 dark:text-rose-400'
   },
 ]
 
-// Menu Items
-const menuItems = [
+// All navigation in a single merged list (no duplicates)
+const allMenuItems = [
   {
-    path: '/dashboard',
-    label: 'nav.dashboard',
-    icon: homeOutline,
-    bg: 'bg-indigo-50 dark:bg-indigo-950/30',
-    color: 'text-indigo-600 dark:text-indigo-400',
+    path: '/profile',
+    label: 'nav.profile',
+    icon: personCircleOutline,
+    bg: 'bg-violet-100 dark:bg-violet-950/40',
+    color: 'text-violet-600 dark:text-violet-400',
     badge: null,
     badgeClass: ''
   },
@@ -257,41 +226,28 @@ const menuItems = [
     path: '/tabs/children',
     label: 'nav.children',
     icon: peopleOutline,
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
+    bg: 'bg-blue-100 dark:bg-blue-950/40',
     color: 'text-blue-600 dark:text-blue-400',
-    badge: '3',
-    badgeClass: 'bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400'
+    badge: null,
+    badgeClass: ''
   },
   {
     path: '/tabs/vaccination',
     label: 'nav.vaccination',
     icon: medkitOutline,
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    bg: 'bg-emerald-100 dark:bg-emerald-950/40',
     color: 'text-emerald-600 dark:text-emerald-400',
+    badge: null,
+    badgeClass: ''
+  },
+  {
+    path: '/tabs/notifications',
+    label: 'nav.notifications',
+    icon: notificationsOutline,
+    bg: 'bg-rose-100 dark:bg-rose-950/40',
+    color: 'text-rose-600 dark:text-rose-400',
     badge: '2',
-    badgeClass: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
-  },
-  {
-    path: '/tabs/calendar',
-    label: 'nav.calendar',
-    icon: calendarOutline,
-    bg: 'bg-purple-50 dark:bg-purple-950/30',
-    color: 'text-purple-600 dark:text-purple-400',
-    badge: null,
-    badgeClass: ''
-  },
-]
-
-// Settings Items
-const settingsItems = [
-  {
-    path: '/tabs/profile',
-    label: 'nav.profile',
-    icon: personCircleOutline,
-    bg: 'bg-indigo-50 dark:bg-indigo-950/30',
-    color: 'text-indigo-600 dark:text-indigo-400',
-    badge: null,
-    badgeClass: ''
+    badgeClass: 'bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'
   },
   {
     path: '/settings',
@@ -299,23 +255,26 @@ const settingsItems = [
     icon: settingsOutline,
     bg: 'bg-zinc-100 dark:bg-zinc-800',
     color: 'text-zinc-600 dark:text-zinc-400',
-    value: null
+    badge: null,
+    badgeClass: ''
   },
   {
     path: '/support',
     label: 'nav.support',
     icon: helpCircleOutline,
-    bg: 'bg-cyan-50 dark:bg-cyan-950/30',
+    bg: 'bg-cyan-100 dark:bg-cyan-950/40',
     color: 'text-cyan-600 dark:text-cyan-400',
-    value: null
+    badge: null,
+    badgeClass: ''
   },
   {
     path: '/about',
     label: 'nav.about',
     icon: informationCircleOutline,
-    bg: 'bg-rose-50 dark:bg-rose-950/30',
-    color: 'text-rose-600 dark:text-rose-400',
-    value: null
+    bg: 'bg-orange-100 dark:bg-orange-950/40',
+    color: 'text-orange-600 dark:text-orange-400',
+    badge: null,
+    badgeClass: ''
   },
 ]
 
@@ -324,7 +283,7 @@ const tabs = [
   { tab: 'dashboard', href: '/tabs/dashboard', icon: gridOutline, label: 'nav.dashboard', badge: null },
   { tab: 'children', href: '/tabs/children', icon: peopleOutline, label: 'nav.children', badge: null },
   { tab: 'vaccination', href: '/tabs/vaccination', icon: medkitOutline, label: 'nav.vaccination', badge: null },
-  { tab:'notifications',href:'/tabs/notifications', icon: notificationsOutline, label: 'nav.notifications', badge: '2' }
+  { tab: 'notifications', href: '/tabs/notifications', icon: notificationsOutline, label: 'nav.notifications', badge: '2' }
 ]
 
 const getUserInitials = () => {
@@ -344,30 +303,201 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-/* One UI Menu Styles */
 .oneui-menu {
-  --width: 320px;
+  --width: 300px;
+  --background: #F8FAFC;
+}
+
+:global(.dark) .oneui-menu {
+  --background: #18181b;
+}
+
+.sidebar-header-bg {
+  background: transparent;
+  border-bottom: 1px solid var(--ion-border-color, rgba(0,0,0,0.06));
+  padding-bottom: 20px;
+}
+
+.sidebar-avatar-inner {
+  background: var(--ion-item-background);
+}
+
+.sidebar-avatar-dot {
+  border-color: var(--ion-item-background);
+}
+
+.sidebar-name-text {
+  color: var(--ion-text-color);
+}
+
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #a1a1aa;
+  padding: 0 4px;
+  margin-bottom: 5px;
+}
+
+:global(.dark) .sidebar-section-label {
+  color: #52525b;
+}
+
+
+.sidebar-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 5px;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.sidebar-nav-item:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
+/* Modern Tab Bar */
+.modern-tabbar {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+
+  height: 78px;
+  border-radius: 28px;
+
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+
+  padding: 4px 8px;
+}
+
+/* Dark Theme */
+.dark .modern-tabbar {
+  background: rgba(24, 24, 27, 0.75);
+  border: 1px solid rgba(63, 63, 70, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Tab Button */
+.tab-btn {
+  --color: #9ca3af;
+  --color-selected: #2563eb;
   --background: transparent;
-}
-
-/* One UI Tab Bar */
-.oneui-tabbar {
-  padding: 4px 0 6px;
-}
-
-/* Tab Button Active State */
-ion-tab-button {
+  --background-focused: transparent;
   --ripple-color: transparent;
+
+  flex: 1;
+  height: 100%;
   position: relative;
+  border-radius: 16px;
+  padding: 0 4px;
 }
 
-ion-tab-button[aria-selected="true"] ion-icon {
-  transform: translateY(-2px);
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
 }
 
-ion-tab-button[aria-selected="true"] ion-label {
+.tab-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-icon {
+  font-size: 26px;
+  transition: all 0.3s ease;
+}
+
+.tab-btn[aria-selected="true"] .tab-icon {
+  color: #2563eb;
+}
+
+.tab-label {
+  font-size: 9px;
+  font-weight: 500;
+  color: #9ca3af;
+  transition: all 0.3s ease;
+}
+
+.tab-btn[aria-selected="true"] .tab-label {
   color: #2563eb;
   font-weight: 600;
+}
+
+.dark .tab-label {
+  color: #71717a;
+}
+
+.dark .tab-btn[aria-selected="true"] .tab-label {
+  color: #60a5fa;
+}
+
+/* Badge */
+.tab-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.dark .tab-badge {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+
+/* Tab Indicator */
+.tab-indicator {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 20px;
+  height: 3px;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.tab-btn[aria-selected="true"] .tab-indicator {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.dark .tab-indicator {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
 }
 
 /* Responsive */
@@ -375,36 +505,80 @@ ion-tab-button[aria-selected="true"] ion-label {
   .oneui-menu {
     --width: 280px;
   }
+
+  .modern-tabbar {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    height: 60px;
+    border-radius: 22px;
+    padding: 3px 6px;
+  }
+
+  .tab-icon {
+    font-size: 20px;
+  }
+
+  .tab-label {
+    font-size: 8px;
+  }
+
+  .tab-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 8px;
+    top: -5px;
+    right: -6px;
+  }
+
+  .tab-indicator {
+    width: 16px;
+    height: 2.5px;
+  }
 }
 
-/* Smooth Animations */
-button:active {
-  transform: scale(0.98);
+@media (max-width: 400px) {
+  .modern-tabbar {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    height: 54px;
+    border-radius: 18px;
+    padding: 2px 4px;
+  }
+
+  .tab-icon {
+    font-size: 18px;
+  }
+
+  .tab-label {
+    font-size: 7px;
+  }
+
+  .tab-badge {
+    min-width: 14px;
+    height: 14px;
+    font-size: 7px;
+    top: -4px;
+    right: -5px;
+    padding: 0 4px;
+  }
+
+  .tab-indicator {
+    width: 14px;
+    height: 2px;
+  }
 }
 
-/* Custom Scrollbar */
+/* Utility */
 ion-content {
   --scroll-background: transparent;
 }
 
-/* One UI Style Cards */
 .rounded-2xl {
   border-radius: 16px;
 }
 
-/* Glass Effect */
-.bg-white {
-  backdrop-filter: blur(0);
-}
-
-/* Samsung One UI 8.5 Inspired Colors */
-:root {
-  --oneui-blue: #2563eb;
-  --oneui-dark: #111827;
-  --oneui-surface: #f8fafc;
-}
-
-/* Dark Mode Adjustments */
 .dark .bg-white {
   background-color: #18181b;
 }

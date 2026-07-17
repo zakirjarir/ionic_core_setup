@@ -104,6 +104,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "children": "Children",
+    "chatbot": "ChatBot",
     "vaccination": "Vaccination",
     "notifications": "Alerts",
     "profile": "Profile",
@@ -114,7 +115,15 @@
     "privacy_policy": "Privacy Policy",
     "logout": "Logout",
     "menu": "Menu",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "quick_access": "Quick Access",
+    "main_menu": "Navigation"
+  },
+  "chatbot": {
+    "title": "BIVEEC Chatbot",
+    "clear_chat": "Clear",
+    "welcome_msg": "Hello! I am your BIVEEC Assistant. How can I help you with child vaccination schedules and health tips today?",
+    "placeholder": "Type your query..."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -309,7 +318,19 @@
     "mark_done": "Mark as Done",
     "no_vaccinations": "No vaccinations scheduled",
     "no_vaccinations_sub": "Add children to see vaccination schedules",
-    "all": "All"
+    "all": "All",
+    "select_child": "Select Child",
+    "no_upcoming": "No upcoming vaccines",
+    "no_completed": "No completed vaccines yet",
+    "no_missed": "No missed vaccines",
+    "all_caught_up": "All vaccines are up to date!",
+    "overdue": "Overdue",
+    "details": "Vaccine Details",
+    "dose_no": "Dose",
+    "schedule_info": "Schedule Information",
+    "available_hospitals": "Available Hospitals & Centers",
+    "available": "Available",
+    "view_map": "View Map"
   },
   "notifications": {
     "title": "Alerts",

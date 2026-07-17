@@ -16,23 +16,20 @@ import {
 import {
   notificationsOutline,
   arrowBackOutline,
-  logOutOutline,
-  settingsOutline,
-  personOutline,
-  closeOutline,
-  chevronForwardOutline,
 } from 'ionicons/icons'
 
-import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { menuController } from '@ionic/vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const popoverRef = ref()
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     required: true,
@@ -55,6 +52,10 @@ defineProps({
   },
 })
 
+const showBack = computed(() => {
+  return props.showBackButton && !route.path.startsWith('/tabs/')
+})
+
 const goBack = () => {
   router.back()
 }
@@ -68,47 +69,48 @@ const openPopover = (e) => {
 
 <template>
   <ion-header class="ion-no-border">
-    <ion-toolbar
-        class="bg-white/80 dark:bg-zinc-950/80 "
+    <ion-toolbar>
+      <div class="flex items-center justify-between w-full px-2 py-1">
+        <div class="flex items-center gap-1.5 min-w-0 flex-1">
 
-    >
-      <!-- Back Button -->
-      <ion-buttons slot="start" v-if="showBackButton">
-        <ion-button
-            fill="clear"
-            @click="goBack"
-            class="text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full w-10 h-10"
-        >
-          <ion-icon :icon="arrowBackOutline" class="text-2xl" />
-        </ion-button>
-      </ion-buttons>
-
-      <!-- Title -->
-      <ion-title class="ms-2 text-left font-bold text-lg text-zinc-900 dark:text-zinc-50">
-        {{ title }}
-      </ion-title>
-
-      <!-- Right Buttons -->
-      <ion-buttons slot="end" class="gap-1">
-        <slot name="end" />
-
-        <!-- Notification Button -->
-        <ion-button
-            v-if="showNotification"
-            fill="clear"
-            class="relative text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full w-10 h-10"
-        >
-          <ion-icon :icon="notificationsOutline" class="text-2xl" />
-          <span
-              v-if="notificationCount > 0"
-              class="absolute top-0 right-0 min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/30"
+          <!-- Back Button -->
+          <ion-button
+              v-if="showBack"
+              fill="clear"
+              @click="goBack"
+              class="m-0 h-10 w-10 flex-shrink-0"
+              style="--padding-start: 0; --padding-end: 0; --color: currentColor; --border-radius: 50%;"
           >
-            {{ notificationCount > 99 ? '99+' : notificationCount }}
-          </span>
-        </ion-button>
+            <ion-icon slot="icon-only" :icon="arrowBackOutline" class="text-2xl text-zinc-700 dark:text-zinc-300" />
+          </ion-button>
 
-        <!-- Profile Avatar -->
-      </ion-buttons>
+          <!-- Title -->
+          <div class="font-bold text-lg ms-5 text-zinc-900 dark:text-zinc-50 truncate">
+            {{ title }}
+          </div>
+        </div>
+
+        <!-- Right Buttons -->
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <slot name="end" />
+
+          <!-- Notification Button -->
+          <ion-button
+              v-if="showNotification"
+              fill="clear"
+              class="relative m-0 h-10 w-10"
+              style="--padding-start: 0; --padding-end: 0; --color: currentColor; --border-radius: 50%;"
+          >
+            <ion-icon slot="icon-only" :icon="notificationsOutline" class="text-2xl text-zinc-700 dark:text-zinc-300" />
+            <span
+                v-if="notificationCount > 0"
+                class="absolute top-0 right-0 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-500 text-white text-[9px] font-bold shadow-lg shadow-red-500/30"
+            >
+              {{ notificationCount > 99 ? '99+' : notificationCount }}
+            </span>
+          </ion-button>
+        </div>
+      </div>
     </ion-toolbar>
   </ion-header>
 

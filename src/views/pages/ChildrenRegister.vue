@@ -2,7 +2,7 @@
   <ion-page>
     <z-header :title="isEditMode ? t('children.edit_child') : t('children.add_child')"/>
 
-    <ion-content class="bg-[#F5F6FA] dark:bg-zinc-950">
+    <ion-content>
       <div class="max-w-md mx-auto px-4 py-4">
 
         <!-- Stepper -->

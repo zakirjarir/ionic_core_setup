@@ -58,12 +58,23 @@ const routes = [
         name: 'Notifications',
         component: () => import('@/views/tabs/NotificationsPage.vue'),
       },
-      {
-        path: 'profile',
-        name: 'Profile',
-        component: () => import('@/views/tabs/ProfilePage.vue'),
-      },
     ],
+  },
+
+  // Profile (protected, standalone - no tab bar)
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/views/tabs/ProfilePage.vue'),
+    meta: { requiresAuth: true },
+  },
+
+  // ChatBot (protected, standalone)
+  {
+    path: '/chatbot',
+    name: 'ChatBot',
+    component: () => import('@/views/tabs/ChatBotPage.vue'),
+    meta: { requiresAuth: true },
   },
 
   // Settings (protected)
@@ -113,6 +124,12 @@ const routes = [
     path: '/children-detail/:id',
     name: 'ChildrenDetail',
     component: () => import('@/views/pages/ChildrenDetailPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/vaccine-detail/:id',
+    name: 'VaccineDetail',
+    component: () => import('@/views/pages/VaccineDetailPage.vue'),
     meta: { requiresAuth: true },
   },
 

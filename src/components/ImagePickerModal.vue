@@ -118,11 +118,15 @@ const handleImageCapture = async (dataUrl) => {
 const takePhoto = async () => {
   try {
     const image = await Camera.getPhoto({
-      quality: 85,
+      quality: 70,
+      width: 1024,
+      height: 1024,
       allowEditing: props.edit ? true : false,
       resultType: CameraResultType.DataUrl,
       source: CameraSource.Camera,
     })
+    console.log("handleImageCapture : "+image?.dataUrl.substring(0, 50) + "...")
+
     await handleImageCapture(image.dataUrl)
   } catch (err) {
     if (err.message !== 'User cancelled photos app') {
@@ -140,11 +144,14 @@ const takePhoto = async () => {
 const selectFromGallery = async () => {
   try {
     const image = await Camera.getPhoto({
-      quality: 85,
+      quality: 70,
+      width: 1024,
+      height: 1024,
       allowEditing: false,
       resultType: CameraResultType.DataUrl,
       source: CameraSource.Photos,
     })
+    console.log("handleImageCapture : "+image?.dataUrl.substring(0, 50) + "...")
     await handleImageCapture(image.dataUrl)
   } catch (err) {
     if (err.message !== 'User cancelled photos app') {

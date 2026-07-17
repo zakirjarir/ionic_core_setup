@@ -9,8 +9,7 @@
       </template>
     </z-header>
 
-    <ion-content
-        class="bg-gradient-to-b from-teal-50/20 via-white to-white dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950">
+    <ion-content>
       <div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-3">
         <div class="relative">
           <div class="absolute inset-0 rounded-full bg-teal-400/20 blur-xl animate-pulse"></div>

@@ -8,7 +8,7 @@
       </template>
     </z-header>
 
-    <ion-content class="bg-zinc-50 dark:bg-zinc-950">
+    <ion-content>
       <!-- Profile Header Grid/Gradient background -->
       <div class="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 dark:from-zinc-900 dark:via-indigo-950 dark:to-zinc-900 pt-8 pb-24 px-4 shadow-inner">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
@@ -447,9 +447,11 @@
     <!-- Global Image Picker Component -->
     <ImagePickerModal
         :is-open="isImagePickerOpen"
-        :has-image="false"
+        :has-image="imagePickerTarget === 'profile' ? !!profile?.photo : false"
+        :current-image-path="imagePickerTarget === 'profile' ? profile?.photo : null"
         @update:is-open="isImagePickerOpen = $event"
         @image-selected="handleImageSelected"
+        @image-deleted="handleImageDeleted"
         :edit="true"
     />
 
@@ -718,27 +720,19 @@ const openImagePicker = (target) => {
   isImagePickerOpen.value = true
 }
 
-const handleImageSelected = async (dataUrl) => {
+const handleImageSelected = async ({ serverPath, dataUrl }) => {
   if (imagePickerTarget.value === 'profile') {
     try {
       store.submitLoading = true
-      // Convert base64 dataUrl → Blob → File
-      const response = await fetch(dataUrl)
-      const blob = await response.blob()
-      const ext = blob.type.split('/')[1] || 'jpg'
-      const file = new File([blob], `avatar_${Date.now()}.${ext}`, { type: blob.type })
-
-      const fakeEvent = { target: { files: [file] } }
 
       // Upload and save
-      await fileUpload(fakeEvent, profile.value, 'photo')
       await updateProfile({
         name: profile.value.name,
         gender: profile.value.gender,
         address: profile.value.address,
         phone: profile.value.phone,
         email: profile.value.email,
-        photo: profile.value.photo
+        photo: serverPath
       })
       await loadUser()
       profile.value = await CP.get('user')
@@ -752,6 +746,29 @@ const handleImageSelected = async (dataUrl) => {
     nidForm.value.front = dataUrl
   } else if (imagePickerTarget.value === 'nid_back') {
     nidForm.value.back = dataUrl
+  }
+}
+
+const handleImageDeleted = async () => {
+  if (imagePickerTarget.value === 'profile') {
+    try {
+      store.submitLoading = true
+      await updateProfile({
+        name: profile.value.name,
+        gender: profile.value.gender,
+        address: profile.value.address,
+        phone: profile.value.phone,
+        email: profile.value.email,
+        photo: null
+      })
+      await loadUser()
+      profile.value = await CP.get('user')
+    } catch (err) {
+      console.error(err)
+      toastAlert('error', t('profile.photo_upload_failed'))
+    } finally {
+      store.submitLoading = false
+    }
   }
 }
 

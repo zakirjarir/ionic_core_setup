@@ -1,20 +1,29 @@
 <template>
   <ion-page>
-    <ion-content class="ion-padding-bottom bg-[#F8FAFC] dark:bg-slate-950">
+    <ion-content class="ion-padding-bottom">
 
       <!-- ===== Header (Sticky) ===== -->
-      <div class="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 pt-6 pb-4 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-slate-700 overflow-hidden flex items-center justify-center">
-              <img @click="router.push('/tabs/profile')" :src="LFA(user?.photo)" alt="Profile" class="w-full h-full object-cover" />
-            </div>
-            <div>
-              <div class="text-[20px] font-black text-gray-800 dark:text-white m-0 pt-2">{{ user?.name || 'Guest User ' }}</div>
-              <p class="text-[10px] text-gray-400 dark:text-slate-400 m-0">{{ $t('dashboard.registered_children', { count: children.length }) }}</p>
+      <div class="sticky top-0 z-20 bg-[#F8FAFC]/90 dark:bg-[#09090B]/90 backdrop-blur-md px-4 pt-[calc(env(safe-area-inset-top,24px)+16px)] pb-4 flex items-center gap-3">
+
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <div
+            class="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] flex-shrink-0 shadow-md shadow-indigo-500/20 cursor-pointer"
+            @click="router.push('/profile')"
+          >
+            <div class="w-full h-full rounded-full bg-[#F8FAFC] dark:bg-[#09090B] overflow-hidden flex items-center justify-center">
+              <img :src="LFA(user?.photo)" alt="Profile" class="w-full h-full object-cover" />
             </div>
           </div>
+          <div class="min-w-0 flex-1">
+            <div class="text-[20px] font-black text-gray-800 dark:text-white m-0 pt-2 truncate leading-tight">{{ user?.name || 'Guest User ' }}</div>
+            <p class="text-[10px] text-gray-400 dark:text-zinc-400 m-0 truncate">{{ $t('dashboard.registered_children', { count: children.length }) }}</p>
+          </div>
         </div>
+
+        <!-- ChatBot Button -->
+        <ion-button fill="clear" @click="router.push('/chatbot')" class="m-0 h-10 w-10 flex-shrink-0" style="--padding-start: 0; --padding-end: 0; --color: currentColor; --border-radius: 50%;">
+          <ion-icon slot="icon-only" :icon="sparklesOutline" class="text-2xl text-indigo-600 dark:text-indigo-400" />
+        </ion-button>
       </div>
 
       <!-- Child Selector (Horizontal Scroll - infinite) -->
@@ -22,25 +31,25 @@
         <div
             v-for="(child, index) in children"
             :key="child.id"
-            class="flex-1 min-w-[166px] rounded-2xl p-1.5 flex items-center justify-between relative transition-all duration-200"
+            class="flex-1 min-w-[166px] rounded-2xl p-1.5 flex items-center justify-between relative transition-all duration-200 overflow-hidden"
             :class="activeChildId === child.id
             ? 'border-2 border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30'
-            : 'border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900'"
+            : 'border-2 border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900'"
             @click="activeChildId = child.id"
         >
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full overflow-hidden bg-blue-200 dark:bg-slate-700">
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-blue-200 dark:bg-zinc-800">
               <img :src="child.avatar" :alt="child.name" class="w-full h-full object-cover" />
             </div>
             <div>
               <span class="text-sm text-gray-800 dark:text-white m-0">{{ child.name }}</span>
-              <p class="text-[10px] text-gray-500 dark:text-slate-400 m-0">{{ child.age }}</p>
+              <p class="text-[10px] text-gray-500 dark:text-zinc-400 m-0">{{ child.age }}</p>
             </div>
           </div>
           <div v-if="activeChildId === child.id" class="bg-indigo-600 text-white rounded-full p-1 flex items-center justify-center w-5 h-5">
             <ion-icon :icon="checkmarkOutline" class="text-xs font-bold"></ion-icon>
           </div>
-          <ion-icon v-else :icon="chevronForwardOutline" class="text-gray-400 dark:text-slate-500"></ion-icon>
+          <ion-icon v-else :icon="chevronForwardOutline" class="text-gray-400 dark:text-zinc-500"></ion-icon>
         </div>
       </div>
       <div
@@ -54,9 +63,9 @@
            from-white/95
            via-cyan-50/80
            to-teal-100/20
-           dark:from-slate-900/95
-           dark:via-slate-800/80
-           dark:to-slate-900/20"
+           dark:from-zinc-950/95
+           dark:via-zinc-900/80
+           dark:to-zinc-950/20"
         ></div>
 
         <!-- Content -->
@@ -90,7 +99,7 @@
                   class="inline-flex w-fit items-center gap-2
                  rounded-lg bg-white/70
                  px-3 py-1.5 text-xs
-                 dark:bg-slate-800/70"
+                 dark:bg-zinc-800/70"
               >
                 <IonIcon
                     :icon="calendarOutline"
@@ -124,8 +133,8 @@
       <!-- ===== Progress + Quick Actions ===== -->
       <div class="px-4 my-4 grid grid-cols-2 gap-4">
         <!-- Progress Circle (SVG) -->
-        <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-gray-50 dark:border-slate-800 flex flex-col items-center justify-center shadow-sm dark:shadow-slate-800/50">
-          <div class="text-[13px] font-bold text-gray-700 dark:text-slate-300  self-start">{{ $t('dashboard.progress_title') }}</div>
+        <div class="bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-gray-50 dark:border-zinc-800 flex flex-col items-center justify-center shadow-sm dark:shadow-zinc-800/50">
+          <div class="text-[13px] font-bold text-gray-700 dark:text-zinc-300  self-start">{{ $t('dashboard.progress_title') }}</div>
           <div class="relative w-28 h-28 flex items-center justify-center">
             <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
               <!-- Background circle -->
@@ -133,7 +142,7 @@
                   cx="50" cy="50" r="42"
                   fill="none"
                   stroke="#e5e7eb"
-                  class="dark:stroke-slate-700"
+                  class="dark:stroke-zinc-800"
                   stroke-width="8"
               />
               <!-- Progress circle -->
@@ -150,9 +159,9 @@
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
               <span class="text-lg font-black text-gray-800 dark:text-white">{{ progress }}%</span>
-              <p class="text-[9px] text-gray-500 dark:text-slate-400 font-bold m-0 mt-0.5 leading-tight text-center">
+              <p class="text-[9px] text-gray-500 dark:text-zinc-400 font-bold m-0 mt-0.5 leading-tight text-center">
                 {{ $t('dashboard.progress_unit', { completed: completedVaccines, total: totalVaccines }) }}
-                <br><span class="font-normal text-gray-400 dark:text-slate-500">{{ $t('dashboard.completed_label') }}</span>
+                <br><span class="font-normal text-gray-400 dark:text-zinc-500">{{ $t('dashboard.completed_label') }}</span>
               </p>
             </div>
           </div>
@@ -169,7 +178,7 @@
             <div class=" rounded-lg mb-1" :class="action.iconBg">
               <ion-icon :icon="action.icon" :class="action.iconColor"></ion-icon>
             </div>
-            <span class="text-[10px] font-bold text-gray-700 dark:text-slate-300">{{ action.label }}</span>
+            <span class="text-[10px] font-bold text-gray-700 dark:text-zinc-300">{{ action.label }}</span>
           </div>
         </div>
       </div>
@@ -184,7 +193,7 @@
         <div
             v-for="schedule in upcomingSchedules"
             :key="schedule.id"
-            class="bg-white dark:bg-slate-900 border border-gray-50 dark:border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-sm dark:shadow-slate-800/50 mb-3"
+            class="bg-white dark:bg-zinc-900 border border-gray-50 dark:border-zinc-800 rounded-2xl p-3 flex items-center justify-between shadow-sm dark:shadow-zinc-800/50 mb-3"
         >
           <div class="flex items-center gap-3">
             <div class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-xl p-2 text-center flex flex-col justify-center min-w-[50px]">
@@ -192,21 +201,21 @@
               <span class="text-[9px] font-bold mt-1">{{ schedule.monthYear }}</span>
             </div>
             <div>
-              <h4 class="text-[11px] font-bold text-gray-800 dark:text-white m-0">{{ schedule.vaccine }} <span class="text-[9px] text-gray-400 dark:text-slate-400 font-normal">{{ schedule.detail }}</span></h4>
+              <h4 class="text-[11px] font-bold text-gray-800 dark:text-white m-0">{{ schedule.vaccine }} <span class="text-[9px] text-gray-400 dark:text-zinc-400 font-normal">{{ schedule.detail }}</span></h4>
               <div class="flex items-center gap-3 mt-1">
-                <span class="text-[9px] text-gray-500 dark:text-slate-400 flex items-center gap-1">
-                  <div class="w-3 h-3 rounded-full bg-blue-200 dark:bg-slate-600 overflow-hidden inline-block">
+                <span class="text-[9px] text-gray-500 dark:text-zinc-400 flex items-center gap-1">
+                  <div class="w-3 h-3 rounded-full bg-blue-200 dark:bg-zinc-700 overflow-hidden inline-block">
                     <img :src="schedule.childAvatar" class="w-full h-full object-cover"/>
                   </div>
                   {{ schedule.childName }}
                 </span>
-                <span class="text-[9px] text-gray-400 dark:text-slate-500">{{ schedule.childAge }}</span>
+                <span class="text-[9px] text-gray-400 dark:text-zinc-500">{{ schedule.childAge }}</span>
               </div>
             </div>
           </div>
           <div class="flex items-center gap-1">
             <span class="text-[9px] bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-1 rounded-full">{{ schedule.remaining }}</span>
-            <ion-icon :icon="chevronForwardOutline" class="text-gray-400 dark:text-slate-500 text-sm"></ion-icon>
+            <ion-icon :icon="chevronForwardOutline" class="text-gray-400 dark:text-zinc-500 text-sm"></ion-icon>
           </div>
         </div>
       </div>
@@ -218,7 +227,7 @@
           <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer">{{ $t('dashboard.view_all') }}</span>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-gray-50 dark:border-slate-800 rounded-2xl divide-y divide-gray-100 dark:divide-slate-800 shadow-sm dark:shadow-slate-800/50">
+        <div class="bg-white dark:bg-zinc-900 border border-gray-50 dark:border-zinc-800 rounded-2xl divide-y divide-gray-100 dark:divide-zinc-800 shadow-sm dark:shadow-zinc-800/50">
           <div
               v-for="note in notifications"
               :key="note.id"
@@ -230,11 +239,11 @@
               </div>
               <div>
                 <h5 class="text-[11px] font-bold text-gray-800 dark:text-white m-0">{{ note.title }}</h5>
-                <p class="text-[10px] text-gray-500 dark:text-slate-400 m-0 mt-0.5">{{ note.desc }}</p>
+                <p class="text-[10px] text-gray-500 dark:text-zinc-400 m-0 mt-0.5">{{ note.desc }}</p>
               </div>
             </div>
             <div class="flex flex-col items-end gap-1.5 min-w-[60px]">
-              <span class="text-[8px] text-gray-400 dark:text-slate-500">{{ note.time }}</span>
+              <span class="text-[8px] text-gray-400 dark:text-zinc-500">{{ note.time }}</span>
               <span v-if="!note.read" class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
             </div>
           </div>
@@ -278,6 +287,7 @@ import {
   calendarNumberOutline,
   documentTextOutline,
   cardOutline,
+  sparklesOutline,
 } from 'ionicons/icons'
 import { useI18n } from 'vue-i18n'
 import router from "@/router/index.js";

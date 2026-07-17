@@ -4,7 +4,7 @@
     <z-header :title="$t('language.title')"/>
 
 
-    <ion-content class="bg-zinc-50 dark:bg-zinc-950">
+    <ion-content>
       <div class="p-4 flex flex-col gap-4">
         <p class="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mb-1">{{ $t('language.select_language') }}</p>
 

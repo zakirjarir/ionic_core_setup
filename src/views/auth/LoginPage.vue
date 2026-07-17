@@ -41,7 +41,7 @@
                   v-model="store.formData.phone"
                   type="tel"
                   inputmode="numeric"
-                  maxlength="10"
+                  maxlength="11"
                   placeholder="১XXXXXXXXX"
                   required
                   class="custom-input"
@@ -196,17 +196,20 @@ const handleLogin = async () => {
   });
 
   console.log(resp)
-  if (parseInt(resp.status) === 2000){
+  if (resp && parseInt(resp.status) === 2000){
    await CP.set('auth_token' ,resp?.result?.token)
    await CP.set('user' ,resp?.result?.user)
 
     store.authToken = resp?.result?.token
+    store.user = resp?.result?.user
 
    const token = await CP.get('auth_token')
     console.log('token',token)
     return router.replace('/tabs/dashboard')
-  }else {
+  } else if (resp) {
     toastAlert(parseInt(resp.status), resp.message || 'Something went wrong')
+  } else {
+    toastAlert('error', 'Connection failed or server is unreachable.')
   }
 }
 

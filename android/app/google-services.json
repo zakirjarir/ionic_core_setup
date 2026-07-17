@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "42806558753",
+    "project_id": "biveec",
+    "storage_bucket": "biveec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:42806558753:android:c7666e98d70e39d203a360",
+        "android_client_info": {
+          "package_name": "com.znslab.biveec"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTt67IV9SJuVqwAUycmyQhRiuwV20c7UY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,7 +2,7 @@
   <ion-page>
     <z-header :title="$t('settings.title')"/>
 
-    <ion-content class="bg-zinc-50 dark:bg-zinc-950">
+    <ion-content>
       <div class="p-4 flex flex-col gap-5">
 
         <!-- ── APPEARANCE ── -->
@@ -56,11 +56,25 @@
           </div>
         </div>
 
+        <!-- ── NOTIFICATIONS ── -->
+        <div>
+          <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2 ml-1">{{ $t('settings.notifications_section') }}</p>
+          <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col gap-3.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <ion-icon :icon="notificationsOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.push_notifications') }}</span>
+              </div>
+              <ion-toggle v-model="pushEnabled" @ionChange="handlePushToggle" color="primary"></ion-toggle>
+            </div>
+          </div>
+        </div>
+
         <!-- ── ACCOUNT ── -->
         <div>
           <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2 ml-1">{{ $t('settings.account') }}</p>
           <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col gap-3.5">
-            <div @click="$router.push('/tabs/profile')" class="flex items-center justify-between cursor-pointer active:opacity-70 transition-opacity">
+            <div @click="$router.push('/profile')" class="flex items-center justify-between cursor-pointer active:opacity-70 transition-opacity">
               <div class="flex items-center gap-3">
                 <ion-icon :icon="personOutline" class="text-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                 <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $t('settings.edit_profile') }}</span>
@@ -145,17 +159,37 @@ import {
 } from 'ionicons/icons'
 import { useThemeStore } from '@/stores/themeStore'
 import { useLanguage } from '@/composables/useLanguage'
-import { useAuthStore } from '@/stores/auth'
+import { useStore } from '@/composables/useStore'
+import { useFunction } from '@/composables/useFunction'
 import ZHeader from "@/components/ZHeader.vue";
+
+import { usePushNotifications } from '@/composables/usePushNotifications'
+import { onMounted } from 'vue'
 
 const { t } = useI18n()
 const themeStore = useThemeStore()
-const authStore = useAuthStore()
+const store = useStore()
+const { logout } = useFunction()
 const router = useRouter()
 const { currentLocale, currentLocaleInfo, setLanguage, supportedLocales } = useLanguage()
+const { registerPush, unregisterPush } = usePushNotifications()
 
 const pushEnabled = ref(true)
 const emailEnabled = ref(false)
+
+onMounted(() => {
+  if (store.user) {
+    pushEnabled.value = store.user.push_enabled ?? true
+  }
+})
+
+const handlePushToggle = async () => {
+  if (pushEnabled.value) {
+    await registerPush()
+  } else {
+    await unregisterPush()
+  }
+}
 
 const themeOptions = [
   { value: 'light', label: 'settings.theme_light', icon: sunnyOutline },
@@ -172,8 +206,7 @@ async function handleLogout() {
       {
         text: t('common.yes'),
         handler: async () => {
-          await authStore.logout()
-          router.replace({ name: 'Login' })
+          await logout()
         },
       },
     ],

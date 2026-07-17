@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 import api from "@/services/api/index.js"
-import {useStore, useAlert, useCP,} from "@/composables/index.js";
+import { useStore } from './useStore.js';
+import { useAlert } from './useAlert.js';
+import { useCP } from './useCP.js';
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Capacitor } from '@capacitor/core'
 
@@ -759,29 +761,36 @@ export const useFunction = () => {
 
 
     const logout = async () =>{
-        const resp = submitData({url:'logout'})
-        if(resp){
-            await CP.remove('auth_token');
-        }
+        submitData({url:'logout'})
+
+        await CP.remove('auth_token');
+        await CP.remove('user');
+
         window.location.href = '/auth/login'
     }
 
     const loadUser = async () =>{
-     const user  = await getData({url:'me',rtn:true})
+      const cachedUser = await CP.get('user')
+      if (cachedUser) {
+          store.user = cachedUser
+      }
+
+      const user  = await getData({url:'me',rtn:true})
       if (user){
           await CP.remove('user')
           await CP.set('user',user)
+          store.user = user
       }
     }
 
 
-    const fileUpload = async (event, dataObject, dataModel,removeOld = true) => {
+    const fileUpload = async (event, dataObject, dataModel, removeOld = true) => {
         const file = event.target.files?.[0];
         if (!file) {
             return toastAlert("error", "No file selected!", "Oops...!");
         }
 
-        if(removeOld) {
+        if (removeOld) {
             if (dataObject[dataModel]) {
                 await fileRemove(dataObject, dataModel);
             }
@@ -794,17 +803,19 @@ export const useFunction = () => {
         try {
             const readData = await httpReq({
                 method: "post",
-                url:'parents_mobil/upload',
+                url: 'parents_mobil/upload',
                 data: formData,
             });
 
-            if (parseInt(readData.status) === 2000) {
+            if (readData && parseInt(readData.status) === 2000) {
                 if (dataObject && dataModel) {
                     dataObject[dataModel] = readData.result;
                 }
                 toastAlert(readData.status, readData.message || "File uploaded successfully");
-            } else {
+            } else if (readData) {
                 toastAlert("error", readData.message || "Upload failed!", "Oops...!");
+            } else {
+                toastAlert("error", "Upload failed!", "Oops...!");
             }
         } catch (error) {
             console.error("Upload error:", error);
@@ -814,26 +825,23 @@ export const useFunction = () => {
         }
     };
 
-    const fileRemove = async (dataObject, dataModel,fileName= null) => {
+    const fileRemove = async (dataObject, dataModel, fileName = null) => {
         try {
-            let file = fileName === null ?dataObject[dataModel]: fileName ;
-            await httpReq(
-                {
-                    method: "post",
-                    url: 'parents_mobil/file_remove' ,
-                    data: { file_name: file },
-                },
-                (readData) => {
-                    if (parseInt(readData.status) === 2000) {
-                        if(fileName === null){
-                            dataObject[dataModel] = null;
-                        }
-                        toastAlert('success', readData.message);
-                    } else {
-                        toastAlert('error', readData.message);
-                    }
+            let file = fileName === null ? dataObject[dataModel] : fileName;
+            const readData = await httpReq({
+                method: "post",
+                url: 'parents_mobil/file_remove',
+                data: { file_name: file },
+            });
+            
+            if (readData && parseInt(readData.status) === 2000) {
+                if (fileName === null && dataObject && dataModel) {
+                    dataObject[dataModel] = null;
                 }
-            );
+                toastAlert('success', readData.message);
+            } else if (readData) {
+                toastAlert('error', readData.message);
+            }
         } catch (error) {
             toastAlert('error', error.message);
         }
@@ -908,6 +916,11 @@ export const useFunction = () => {
         return await httpReq({ method: 'post', url: 'parents_mobil/profile/change-password', data })
     }
 
+    /** Update device token for Push Notifications */
+    const updateDeviceToken = async (data) => {
+        return await httpReq({ method: 'post', url: 'parents_mobil/profile/update-device-token', data })
+    }
+
     // ──────────────────────────────────────────────────────────────────────
 
     return {
@@ -946,5 +959,6 @@ export const useFunction = () => {
         sendEmailOtp,
         verifyEmailOtp,
         changePasswordApi,
+        updateDeviceToken,
     }
 }

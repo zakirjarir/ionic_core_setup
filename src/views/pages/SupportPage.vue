@@ -2,7 +2,7 @@
   <ion-page>
    <z-header :title="$t('support.title')"/>
 
-    <ion-content class="bg-zinc-50 dark:bg-zinc-950">
+    <ion-content>
       <div class="p-4 flex flex-col gap-6">
         <!-- Hero -->
         <div class="flex flex-col items-center gap-3 text-center py-6">
