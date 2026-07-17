@@ -9,6 +9,9 @@
     </z-header>
 
     <ion-content>
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <!-- Segment -->
       <div class="px-4 pt-3 pb-1">
         <ion-segment v-model="activeSegment" class="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-0.5">
@@ -28,7 +31,7 @@
             :key="notif.id"
             class="flex items-start gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm relative cursor-pointer active:scale-[0.98] transition-transform"
             :class="{ 'border-l-4 border-l-indigo-600 dark:border-l-indigo-400': !notif.read }"
-            @click="notif.read = true"
+            @click="viewNotification(notif)"
           >
             <div
               class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
@@ -56,21 +59,54 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonButtons,
   IonMenuButton, IonIcon, IonSegment, IonSegmentButton, IonLabel,
+  IonRefresher, IonRefresherContent
 } from '@ionic/vue'
 import { alertCircleOutline, informationCircleOutline, notificationsOffOutline } from 'ionicons/icons'
 import ZHeader from "@/components/ZHeader.vue";
+import { useCP, useFunction, useStore } from "@/composables/index.js"
 
+const router = useRouter()
+const { getData, submitData } = useFunction()
+const CP = useCP()
+const store = useStore()
 const activeSegment = ref('all')
+const notifications = ref([])
 
-const notifications = ref([
-  { id: 1, type: 'warning', title: 'MMR Due Soon', message: 'Ayaan\'s MMR vaccination is due in 3 days.', time: '2 hours ago', read: false },
-  { id: 2, type: 'danger', title: 'Overdue Vaccination', message: 'Rayan\'s Polio booster is overdue by 5 days.', time: 'Yesterday', read: false },
-  { id: 3, type: 'info', title: 'Schedule Reminder', message: 'Zara\'s DTP booster is scheduled for next week.', time: '3 days ago', read: true },
-])
+const fetchNotifications = async () => {
+  // 1. Load from local cache first for instant offline view
+  const cached = await CP.get('cached_notifications', [])
+  if (cached && cached.length > 0) {
+    notifications.value = cached
+    store.unreadNotificationsCount = cached.filter(n => !n.read).length
+  }
+
+  // 2. Fetch fresh data from the server
+  try {
+    const result = await getData({ url: 'notifications', rtn: true })
+    if (result) {
+      notifications.value = result
+      store.unreadNotificationsCount = result.filter(n => !n.read).length
+      // Save updated data to cache
+      await CP.set('cached_notifications', result)
+    }
+  } catch (err) {
+    console.error('Failed to fetch notifications from server:', err)
+  }
+}
+
+onMounted(() => {
+  fetchNotifications()
+})
+
+const handleRefresh = async (event) => {
+  await fetchNotifications()
+  event.target.complete()
+}
 
 const displayedNotifications = computed(() =>
   activeSegment.value === 'unread'
@@ -78,7 +114,34 @@ const displayedNotifications = computed(() =>
     : notifications.value
 )
 
-function markAllRead() {
-  notifications.value.forEach(n => n.read = true)
+async function viewNotification(notif) {
+  if (!notif.read) {
+    notif.read = true
+    store.unreadNotificationsCount = notifications.value.filter(n => !n.read).length
+    // Save to cache immediately
+    await CP.set('cached_notifications', notifications.value)
+    
+    // Mark as read in the backend database (run asynchronously)
+    submitData({
+      url: `notifications/${notif.id}/mark-read`,
+      data: {},
+      method: 'post'
+    })
+  }
+  router.push(`/notification-detail/${notif.id}`)
+}
+
+async function markAllRead() {
+  const success = await submitData({
+    url: 'notifications/mark-read',
+    data: {},
+    method: 'post'
+  })
+  if (success) {
+    notifications.value.forEach(n => n.read = true)
+    store.unreadNotificationsCount = 0
+    // Update local cache
+    await CP.set('cached_notifications', notifications.value)
+  }
 }
 </script>

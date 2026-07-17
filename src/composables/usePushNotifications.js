@@ -23,6 +23,19 @@ export const usePushNotifications = () => {
 
       if (receive !== 'granted') throw new Error('Permission denied')
 
+      // Create high-importance channel for Android
+      if (Capacitor.getPlatform() === 'android') {
+        await PushNotifications.createChannel({
+          id: 'biveec_reminders',
+          name: 'Vaccination Reminders',
+          description: 'Notifications for child vaccination schedules',
+          importance: 5, // High importance (shows banner, plays sound)
+          visibility: 1, // Public
+          sound: 'default',
+          vibration: true,
+        })
+      }
+
       await PushNotifications.register()
       return true
     } catch (e) {

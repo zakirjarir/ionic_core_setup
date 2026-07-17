@@ -1,99 +1,311 @@
 <template>
   <ion-page>
-    <ion-content :fullscreen="true" class="bg-zinc-50 dark:bg-zinc-950">
-      <div class="min-h-full flex flex-col justify-between px-6 py-10 bg-zinc-50 dark:bg-zinc-950">
-        <!-- Logo -->
-        <div class="flex flex-col items-center pt-8 pb-6">
-          <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/10">
-            <ion-icon :icon="heartOutline" class="text-4xl text-white" />
-          </div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">{{ $t('common.app_name') }}</h1>
-          <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">{{ $t('common.app_tagline') }}</p>
-        </div>
+    <ion-content class="ion-padding-horizontal [--background:#ffffff]">
 
-        <!-- Form -->
-        <div class="flex-1 flex flex-col justify-center gap-5 max-w-md w-full mx-auto">
-          <div class="mb-2">
-            <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{{ $t('auth.forgot_password') }}</h2>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{{ $t('auth.forgot_subtitle') }}</p>
-          </div>
+      <!-- Background Shapes -->
+      <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 opacity-60"></div>
+      <div class="absolute bottom-0 left-0 w-40 h-40 bg-blue-50 rounded-tr-full -z-10 opacity-60"></div>
 
-          <!-- Email -->
-          <div class="flex flex-col gap-1.5">
-            <span class="text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">{{ $t('auth.email_label') }}</span>
-            <ion-input
-              v-model="form.email"
-              type="email"
-              :placeholder="$t('auth.email_placeholder')"
-              class="w-full h-14 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none text-sm font-medium"
-              autocomplete="email"
+      <div class="flex flex-col justify-between min-h-full py-8 px-4">
+
+        <!-- Top Section: Logo Image -->
+        <div class="flex flex-col items-center mt-12">
+          <div class="w-48 h-48 flex items-center justify-center mb-2">
+            <img
+                src="/images/login-image.png"
+                alt="অ্যাপ লোগো"
+                class="object-contain w-full h-full"
             />
-            <span v-if="errors.email" class="text-xs font-medium text-red-500">{{ errors.email }}</span>
-          </div>
-
-          <!-- Send Button -->
-          <ion-button
-            @click="handleSubmit"
-            :disabled="loading || sent"
-            class="h-14 font-semibold text-base mt-2 shadow-md shadow-indigo-500/10"
-            color="primary"
-          >
-            <ion-spinner v-if="loading" name="crescent" class="mr-2" />
-            {{ loading ? $t('auth.sending') : $t('auth.send_reset_link') }}
-          </ion-button>
-
-          <!-- Success State -->
-          <div v-if="sent" class="flex flex-col items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-500/30 rounded-xl p-4 text-center mt-2">
-            <ion-icon :icon="checkmarkCircleOutline" class="text-3xl text-green-500" />
-            <p class="text-sm text-green-700 dark:text-green-400 font-semibold">{{ $t('auth.reset_link_sent') }}</p>
           </div>
         </div>
 
-        <!-- Footer -->
-        <div class="flex justify-center items-center gap-1.5 pt-6 pb-2">
-          <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $t('auth.have_account') }}</span>
-          <router-link to="/auth/login" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">{{ $t('auth.login') }}</router-link>
+        <!-- Middle Section -->
+        <div class="flex-1 flex flex-col justify-center my-8 max-w-md w-full mx-auto">
+          
+          <div class="mb-6 text-center">
+            <h2 class="text-2xl font-bold text-gray-800">পাসওয়ার্ড ভুলে গেছেন?</h2>
+            <p class="text-sm text-gray-500 mt-1">
+              {{ step === 1 ? 'আপনার নিবন্ধিত মোবাইল নম্বরটি দিন এবং ওটিপি (OTP) কোড পাঠান।' : 'আপনার মোবাইলে পাঠানো ওটিপি (OTP) ও নতুন পাসওয়ার্ড দিন।' }}
+            </p>
+          </div>
+
+          <form @submit.prevent="step === 1 ? handleSendOtp() : handleResetPassword()" class="space-y-4">
+
+            <!-- Step 1: Phone input -->
+            <ion-item
+                v-if="step === 1"
+                lines="none"
+                class="w-full bg-white border border-gray-300 rounded-xl px-4 h-[56px] flex items-center focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition [--background:transparent] [--inner-padding-end:0] [--padding-start:0]"
+            >
+              <ion-icon
+                  slot="start"
+                  :icon="callOutline"
+                  class="text-blue-600 text-xl mr-3 m-0"
+              />
+
+              <div class="text-gray-700 font-medium mr-2">
+                +880
+              </div>
+
+              <ion-input
+                  v-model="formData.phone"
+                  type="tel"
+                  inputmode="numeric"
+                  maxlength="11"
+                  placeholder="১XXXXXXXXX"
+                  required
+                  class="custom-input"
+              />
+            </ion-item>
+
+            <!-- Step 2: OTP & New Password input -->
+            <div v-if="step === 2" class="space-y-4">
+              <ion-item
+                  lines="none"
+                  class="w-full bg-white border border-gray-300 rounded-xl px-4 h-[56px] flex items-center focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition [--background:transparent] [--inner-padding-end:0] [--padding-start:0]"
+              >
+                <ion-icon
+                    slot="start"
+                    :icon="keyOutline"
+                    class="text-blue-600 text-xl mr-3 m-0"
+                />
+
+                <ion-input
+                    v-model="formData.otp"
+                    type="tel"
+                    inputmode="numeric"
+                    maxlength="6"
+                    placeholder="৬ ডিজিটের ওটিপি (OTP)"
+                    required
+                    class="custom-input"
+                />
+              </ion-item>
+
+              <ion-item
+                  lines="none"
+                  class="w-full bg-white border border-gray-300 rounded-xl px-4 h-[56px] flex items-center focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition [--background:transparent] [--inner-padding-end:0] [--padding-start:0]"
+              >
+                <ion-icon
+                    slot="start"
+                    :icon="lockClosedOutline"
+                    class="text-blue-600 text-xl mr-3 m-0"
+                />
+
+                <ion-input
+                    :type="showPassword ? 'text' : 'password'"
+                    placeholder="নতুন পাসওয়ার্ড"
+                    v-model="formData.password"
+                    required
+                    class="custom-input"
+                />
+
+                <ion-button
+                    slot="end"
+                    fill="clear"
+                    @click="showPassword = !showPassword"
+                    class="m-0 h-full text-gray-500 hover:text-gray-700 [--padding-start:0] [--padding-end:0]"
+                >
+                  <ion-icon
+                      slot="icon-only"
+                      :icon="showPassword ? eyeOffOutline : eyeOutline"
+                      class="text-xl"
+                  />
+                </ion-button>
+              </ion-item>
+
+              <ion-item
+                  lines="none"
+                  class="w-full bg-white border border-gray-300 rounded-xl px-4 h-[56px] flex items-center focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition [--background:transparent] [--inner-padding-end:0] [--padding-start:0]"
+              >
+                <ion-icon
+                    slot="start"
+                    :icon="shieldCheckmarkOutline"
+                    class="text-blue-600 text-xl mr-3 m-0"
+                />
+
+                <ion-input
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    placeholder="পাসওয়ার্ড নিশ্চিত করুন"
+                    v-model="formData.password_confirmation"
+                    required
+                    class="custom-input"
+                />
+
+                <ion-button
+                    slot="end"
+                    fill="clear"
+                    @click="showConfirmPassword = !showConfirmPassword"
+                    class="m-0 h-full text-gray-500 hover:text-gray-700 [--padding-start:0] [--padding-end:0]"
+                >
+                  <ion-icon
+                      slot="icon-only"
+                      :icon="showConfirmPassword ? eyeOffOutline : eyeOutline"
+                      class="text-xl"
+                  />
+                </ion-button>
+              </ion-item>
+            </div>
+
+            <ion-button
+                type="submit"
+                expand="block"
+                :disabled="submitting"
+                class="w-full text-base font-semibold mt-4 h-[54px] [--background:#2563eb] [--background-hover:#1d4ed8] [--background-activated:#1e40af] [--border-radius:12px] [--box-shadow:none]"
+            >
+              <ion-spinner v-if="submitting" name="crescent" class="mr-2" />
+              {{ step === 1 ? 'ওটিপি পাঠান' : 'পাসওয়ার্ড পরিবর্তন করুন' }}
+            </ion-button>
+
+          </form>
         </div>
+
+        <div class="text-center pb-4">
+          <p class="text-sm text-gray-500 font-medium">
+            ইতিমধ্যে পাসওয়ার্ড মনে পড়েছে?
+            <router-link
+                to="/auth/login"
+                class="text-blue-600 font-bold hover:underline ml-1"
+            >
+              লগইন করুন
+            </router-link>
+          </p>
+        </div>
+
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { ref } from 'vue'
 import {
-  IonPage, IonContent, IonInput, IonButton, IonIcon, IonSpinner, toastController,
+  IonPage,
+  IonContent,
+  IonIcon,
+  IonItem,
+  IonInput,
+  IonButton,
+  IonSpinner,
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from '@ionic/vue'
-import { heartOutline, checkmarkCircleOutline } from 'ionicons/icons'
 
-const { t } = useI18n()
-const loading = ref(false)
-const sent = ref(false)
-const form = reactive({ email: '' })
-const errors = reactive({ email: '' })
+import {
+  callOutline,
+  lockClosedOutline,
+  eyeOutline,
+  eyeOffOutline,
+  keyOutline,
+  shieldCheckmarkOutline
+} from 'ionicons/icons'
+import { useAlert, useFunction } from "@/composables/index.js"
+import router from "@/router/index.js"
+import { useThemeStore } from '@/stores/themeStore'
 
-function validate() {
-  errors.email = ''
-  if (!form.email) { errors.email = t('validation.email_required'); return false }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { errors.email = t('validation.email_invalid'); return false }
-  return true
+const themeStore = useThemeStore()
+
+onIonViewWillEnter(async () => {
+  document.documentElement.classList.remove('dark', 'ion-palette-dark')
+  document.documentElement.setAttribute('data-theme', 'light')
+  await themeStore.updateStatusBar()
+})
+
+onIonViewWillLeave(async () => {
+  await themeStore.loadTheme()
+})
+
+const { submitData } = useFunction()
+const { toastAlert } = useAlert()
+
+const step = ref(1)
+const submitting = ref(false)
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
+
+const formData = ref({
+  phone: '',
+  otp: '',
+  password: '',
+  password_confirmation: ''
+})
+
+const handleSendOtp = async () => {
+  if (!formData.value.phone) return
+
+  submitting.value = true
+  try {
+    const resp = await submitData({
+      url: 'forgot-password/send-otp',
+      data: { phone: formData.value.phone },
+      rtnFullResp: true
+    })
+
+    if (resp && parseInt(resp.status) === 2000) {
+      toastAlert('success', resp.message || 'OTP Sent successfully')
+      step.value = 2
+    } else if (resp) {
+      toastAlert('error', resp.message || 'Failed to send OTP')
+    } else {
+      toastAlert('error', 'Connection failed or server is unreachable.')
+    }
+  } catch (err) {
+    console.error(err)
+    toastAlert('error', 'Error sending OTP')
+  } finally {
+    submitting.value = false
+  }
 }
 
-async function handleSubmit() {
-  if (!validate()) return
-  loading.value = true
+const handleResetPassword = async () => {
+  if (!formData.value.otp || !formData.value.password || !formData.value.password_confirmation) {
+    toastAlert('error', 'সব তথ্য পূরণ করুন।')
+    return
+  }
+  if (formData.value.password !== formData.value.password_confirmation) {
+    toastAlert('error', 'পাসওয়ার্ড দুটি মিলছে না।')
+    return
+  }
+
+  submitting.value = true
   try {
-    await new Promise(r => setTimeout(r, 1200))
-    sent.value = true
-  } catch {
-    const toast = await toastController.create({
-      message: t('auth.reset_failed'),
-      duration: 3000, position: 'bottom', color: 'danger',
+    const resp = await submitData({
+      url: 'forgot-password/reset',
+      data: {
+        phone: formData.value.phone,
+        otp: formData.value.otp,
+        password: formData.value.password,
+        password_confirmation: formData.value.password_confirmation
+      },
+      rtnFullResp: true
     })
-    await toast.present()
+
+    if (resp && parseInt(resp.status) === 2000) {
+      toastAlert('success', resp.message || 'Password reset successfully')
+      router.replace('/auth/login')
+    } else if (resp) {
+      toastAlert('error', resp.message || 'Failed to reset password')
+    } else {
+      toastAlert('error', 'Connection failed or server is unreachable.')
+    }
+  } catch (err) {
+    console.error(err)
+    toastAlert('error', 'Error resetting password')
   } finally {
-    loading.value = false
+    submitting.value = false
   }
 }
 </script>
+
+<style scoped>
+ion-page, ion-content {
+  --background: #ffffff !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+.custom-input {
+  --color: #000000;
+  --placeholder-color: #6b7280;
+  --placeholder-opacity: 1;
+}
+</style>

@@ -182,6 +182,19 @@
           </div>
         </div>
 
+        <!-- AEFI Reports Card -->
+        <div class="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-zinc-200/50 dark:shadow-none border border-zinc-100/80 dark:border-zinc-800 overflow-hidden mb-5">
+          <div class="px-5 py-4.5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/50 cursor-pointer" @click="router.push('/aefi-report')">
+            <h3 class="font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2.5 text-base">
+              <div class="p-1.5 bg-rose-50 dark:bg-rose-950/50 rounded-lg text-rose-600 dark:text-rose-400 flex">
+                <ion-icon :icon="alertCircleOutline" />
+              </div>
+              {{ $t('aefi.title') }}
+            </h3>
+            <ion-icon :icon="chevronForwardOutline" class="text-zinc-400 dark:text-zinc-500 text-sm"></ion-icon>
+          </div>
+        </div>
+
         <!-- Preferences Card -->
         <div class="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-zinc-200/50 dark:shadow-none border border-zinc-100/80 dark:border-zinc-800 overflow-hidden mb-6">
           <div class="px-5 py-4.5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
@@ -460,13 +473,15 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   IonPage, IonContent, IonButton, IonIcon, IonModal, onIonViewWillEnter
 } from '@ionic/vue'
 import {
   createOutline, cameraOutline, checkmarkCircleOutline,
   personOutline, callOutline, alertCircleOutline, cardOutline, settingsOutline,
-  lockClosedOutline, logOutOutline, shieldCheckmarkOutline, closeOutline
+  lockClosedOutline, logOutOutline, shieldCheckmarkOutline, closeOutline,
+  chevronForwardOutline
 } from 'ionicons/icons'
 import ZHeader from '@/components/ZHeader.vue'
 import ImagePickerModal from '@/components/ImagePickerModal.vue'
@@ -474,6 +489,7 @@ import {useCP, useFunction, useStore, useAlert, useForm} from "@/composables/ind
 import MyInput from "@/components/MyInput.vue";
 import { useI18n } from 'vue-i18n'
 
+const router = useRouter()
 const CP = useCP()
 const F = useForm()
 const store = useStore()

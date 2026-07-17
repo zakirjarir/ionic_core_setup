@@ -9,6 +9,9 @@
     </z-header>
 
     <ion-content>
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <div class="max-w-md mx-auto px-4 py-5 space-y-5">
 
         <!-- Search and Gender Filter Bar -->
@@ -124,7 +127,8 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import {
-  IonPage, IonContent, IonButton, IonIcon, IonSpinner, IonModal, onIonViewWillEnter
+  IonPage, IonContent, IonButton, IonIcon, IonSpinner, IonModal, onIonViewWillEnter,
+  IonRefresher, IonRefresherContent
 } from '@ionic/vue'
 import {
   addOutline, peopleOutline, createOutline,
@@ -164,6 +168,11 @@ onIonViewWillEnter(async () => {
   // 2. Then, attempt to fetch fresh data from the server
   await fetchChildren();
 })
+
+const handleRefresh = async (event) => {
+  await fetchChildren()
+  event.target.complete()
+}
 
 const fetchChildren = async () => {
   try {

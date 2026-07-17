@@ -3,6 +3,9 @@
     <z-header :title="$t('vaccination.title')"/>
 
     <ion-content>
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <!-- Child Selector -->
       <div class="px-4 pt-3">
         <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
@@ -194,7 +197,8 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  IonPage, IonContent, IonIcon, IonSegment, IonSegmentButton, IonLabel, onIonViewWillEnter
+  IonPage, IonContent, IonIcon, IonSegment, IonSegmentButton, IonLabel, onIonViewWillEnter,
+  IonRefresher, IonRefresherContent
 } from '@ionic/vue'
 import {
   medkitOutline,
@@ -246,6 +250,11 @@ const loadData = async () => {
     console.error('Error fetching vaccinations:', error)
     // Falls back to cached data already displayed
   }
+}
+
+const handleRefresh = async (event) => {
+  await loadData()
+  event.target.complete()
 }
 
 const getChildName = (childId) => {

@@ -132,6 +132,18 @@ const routes = [
     component: () => import('@/views/pages/VaccineDetailPage.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/notification-detail/:id',
+    name: 'NotificationDetail',
+    component: () => import('@/views/pages/NotificationDetailPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/aefi-report',
+    name: 'AefiReport',
+    component: () => import('@/views/pages/AefiReportPage.vue'),
+    meta: { requiresAuth: true },
+  },
 
   // Privacy Policy (protected)
   {

@@ -170,7 +170,9 @@ import {
   IonItem,
   IonInput,
   IonButton,
-  IonCheckbox
+  IonCheckbox,
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from '@ionic/vue'
 
 import {
@@ -181,6 +183,19 @@ import {
 } from 'ionicons/icons'
 import {useAlert, useCP, useFunction, useStore} from "@/composables/index.js";
 import router from "@/router/index.js";
+import { useThemeStore } from '@/stores/themeStore'
+
+const themeStore = useThemeStore()
+
+onIonViewWillEnter(async () => {
+  document.documentElement.classList.remove('dark', 'ion-palette-dark')
+  document.documentElement.setAttribute('data-theme', 'light')
+  await themeStore.updateStatusBar()
+})
+
+onIonViewWillLeave(async () => {
+  await themeStore.loadTheme()
+})
 
 const store = useStore()
 const { submitData} = useFunction()
@@ -216,6 +231,12 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+ion-page, ion-content {
+  --background: #ffffff !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
 .custom-input {
   --color: #000000;
   --placeholder-color: #6b7280;

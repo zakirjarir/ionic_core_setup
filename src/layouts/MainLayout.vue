@@ -163,20 +163,44 @@ import {
   homeOutline,
   chevronForwardOutline,
   sparklesOutline,
+  alertCircleOutline,
 } from 'ionicons/icons'
 
 import { useRouter } from 'vue-router'
-import { useCP, useFunction } from "@/composables/index.js"
-import { ref } from 'vue'
+import { useCP, useFunction, useStore } from "@/composables/index.js"
+import { usePushNotifications } from '@/composables/usePushNotifications'
+import { ref, computed } from 'vue'
 
 const CP = useCP()
+const store = useStore()
 const router = useRouter()
-const { logout, LFA } = useFunction()
+const { logout, LFA, getData } = useFunction()
+const { registerPush, syncTokenWithBackend } = usePushNotifications()
 
 const user = ref({})
 
 onIonViewWillEnter(async () => {
   user.value = await CP.get('user')
+  
+  if (user.value && (user.value.push_enabled ?? true)) {
+    await registerPush()
+    await syncTokenWithBackend()
+  }
+
+  // Load unread notifications count from cache immediately
+  const cachedNotifs = await CP.get('cached_notifications', [])
+  store.unreadNotificationsCount = cachedNotifs.filter(n => !n.read).length
+
+  // Sync notifications in background
+  try {
+    const result = await getData({ url: 'notifications', rtn: true })
+    if (result) {
+      store.unreadNotificationsCount = result.filter(n => !n.read).length
+      await CP.set('cached_notifications', result)
+    }
+  } catch (err) {
+    console.error('Failed to sync notifications in MainLayout:', err)
+  }
 })
 
 // Quick Actions (top icon grid)
@@ -212,7 +236,7 @@ const quickActions = [
 ]
 
 // All navigation in a single merged list (no duplicates)
-const allMenuItems = [
+const allMenuItems = computed(() => [
   {
     path: '/profile',
     label: 'nav.profile',
@@ -246,8 +270,17 @@ const allMenuItems = [
     icon: notificationsOutline,
     bg: 'bg-rose-100 dark:bg-rose-950/40',
     color: 'text-rose-600 dark:text-rose-400',
-    badge: '2',
-    badgeClass: 'bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'
+    badge: store.unreadNotificationsCount > 0 ? store.unreadNotificationsCount.toString() : null,
+    badgeClass: 'bg-rose-500 text-white font-extrabold shadow-sm'
+  },
+  {
+    path: '/aefi-report',
+    label: 'nav.aefi',
+    icon: alertCircleOutline,
+    bg: 'bg-red-100 dark:bg-red-950/40',
+    color: 'text-red-600 dark:text-red-400',
+    badge: null,
+    badgeClass: ''
   },
   {
     path: '/settings',
@@ -276,15 +309,15 @@ const allMenuItems = [
     badge: null,
     badgeClass: ''
   },
-]
+])
 
 // Tabs
-const tabs = [
+const tabs = computed(() => [
   { tab: 'dashboard', href: '/tabs/dashboard', icon: gridOutline, label: 'nav.dashboard', badge: null },
   { tab: 'children', href: '/tabs/children', icon: peopleOutline, label: 'nav.children', badge: null },
   { tab: 'vaccination', href: '/tabs/vaccination', icon: medkitOutline, label: 'nav.vaccination', badge: null },
-  { tab: 'notifications', href: '/tabs/notifications', icon: notificationsOutline, label: 'nav.notifications', badge: '2' }
-]
+  { tab: 'notifications', href: '/tabs/notifications', icon: notificationsOutline, label: 'nav.notifications', badge: store.unreadNotificationsCount > 0 ? store.unreadNotificationsCount.toString() : null }
+])
 
 const getUserInitials = () => {
   const name = user?.value?.name || 'Guest'
@@ -369,7 +402,7 @@ async function handleLogout() {
   right: 16px;
   bottom: 16px;
 
-  height: 78px;
+  height: 88px;
   border-radius: 28px;
 
   background: rgba(255, 255, 255, 0.75);
@@ -425,7 +458,7 @@ async function handleLogout() {
 }
 
 .tab-icon {
-  font-size: 26px;
+  font-size: 30px;
   transition: all 0.3s ease;
 }
 
@@ -434,7 +467,7 @@ async function handleLogout() {
 }
 
 .tab-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   color: #9ca3af;
   transition: all 0.3s ease;
@@ -458,13 +491,13 @@ async function handleLogout() {
   position: absolute;
   top: -6px;
   right: -8px;
-  min-width: 18px;
-  height: 18px;
+  min-width: 20px;
+  height: 20px;
   padding: 0 5px;
 
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   border-radius: 20px;
   display: flex;
@@ -510,23 +543,23 @@ async function handleLogout() {
     left: 12px;
     right: 12px;
     bottom: 12px;
-    height: 60px;
+    height: 72px;
     border-radius: 22px;
     padding: 3px 6px;
   }
 
   .tab-icon {
-    font-size: 20px;
+    font-size: 24px;
   }
 
   .tab-label {
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .tab-badge {
-    min-width: 16px;
-    height: 16px;
-    font-size: 8px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
     top: -5px;
     right: -6px;
   }
@@ -542,23 +575,23 @@ async function handleLogout() {
     left: 8px;
     right: 8px;
     bottom: 8px;
-    height: 54px;
+    height: 66px;
     border-radius: 18px;
     padding: 2px 4px;
   }
 
   .tab-icon {
-    font-size: 18px;
+    font-size: 22px;
   }
 
   .tab-label {
-    font-size: 7px;
+    font-size: 9px;
   }
 
   .tab-badge {
-    min-width: 14px;
-    height: 14px;
-    font-size: 7px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
     top: -4px;
     right: -5px;
     padding: 0 4px;

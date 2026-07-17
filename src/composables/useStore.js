@@ -29,6 +29,7 @@ export const useStore = defineStore('data', () => {
     const userId = ref(null)
     const authToken = ref(null)
     const currentLocale = ref(null)
+    const unreadNotificationsCount = ref(0)
 
 
 
@@ -97,9 +98,8 @@ export const useStore = defineStore('data', () => {
         reset,
         genders,
         birthTypes,
-        bloodGroups
-
-
+        bloodGroups,
+        unreadNotificationsCount
     }
 
 })
