@@ -168,24 +168,30 @@ const router = createRouter({
 let appLoaded = false
 
 router.beforeEach(async (to, from, next) => {
-  const { getAuthToken, loadUser } = useFunction()
+  try {
+    const { getAuthToken, loadUser } = useFunction()
 
-  const token = await getAuthToken()
-  const isAuthenticated = !!token
+    const token = await getAuthToken()
+    const isAuthenticated = !!token
 
-  if (isAuthenticated && !appLoaded) {
-    appLoaded = true
-    await loadUser()
+    if (isAuthenticated && !appLoaded) {
+      appLoaded = true
+      // Load user in background without blocking initial route navigation
+      loadUser().catch(err => console.error('Background loadUser error:', err))
+    }
+
+    if (to.meta.requiresAuth && !isAuthenticated) {
+      return next({ name: 'Login' })
+    }
+
+    if (to.meta.guest && isAuthenticated) {
+      return next({ path: '/tabs/dashboard' })
+    }
+    next()
+  } catch (error) {
+    console.error('Router navigation error:', error)
+    next()
   }
-
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    return next({ name: 'Login' })
-  }
-
-  if (to.meta.guest && isAuthenticated) {
-    return next({ path: '/tabs/dashboard' })
-  }
-  next()
 })
 
 export default router

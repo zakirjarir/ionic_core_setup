@@ -6,6 +6,16 @@
       <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
+
+      <!-- Hidden file input for web / camera fallback -->
+      <input
+        ref="fileInputRef"
+        type="file"
+        accept="image/*"
+        class="hidden"
+        @change="handleFileChange"
+      />
+
       <div class="max-w-md mx-auto px-4 py-5 space-y-6">
 
         <!-- Tabs Segment -->
@@ -39,11 +49,11 @@
             />
 
             <!-- Vaccine Selector -->
-            <div v-if="filteredCompletedVaccines.length > 0">
+            <div v-if="availableVaccines.length > 0">
               <my-input
-                v-model="formData.child_vaccination_id"
+                v-model="selectedVaccineKey"
                 type="select"
-                name="child_vaccination_id"
+                name="selected_vaccine"
                 :label="t('aefi.vaccine_label')"
                 :options="vaccineOptions"
                 value-key="id"
@@ -207,7 +217,7 @@
             expand="block"
             class="h-12 font-bold text-sm shadow-md"
             style="--background: linear-gradient(to right, #ef4444, #f97316); --border-radius: 16px; --color: #fff;"
-            :disabled="submitting || filteredCompletedVaccines.length === 0"
+            :disabled="submitting || availableVaccines.length === 0"
             @click="submitReport"
           >
             <ion-spinner v-if="submitting" name="crescent" slot="start" class="text-white" />
@@ -329,6 +339,7 @@ import {
   timeOutline, calendarOutline, peopleOutline, bandageOutline, medkitOutline,
   cameraOutline, trashOutline, imageOutline
 } from 'ionicons/icons'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import { useI18n } from 'vue-i18n'
 import ZHeader from '@/components/ZHeader.vue'
 import MyInput from '@/components/MyInput.vue'
@@ -342,16 +353,17 @@ const { getData, submitData, formatDate, uploadImageDataUrl, LFA } = useFunction
 
 const activeTab = ref('report')
 const children = ref([])
-const completedVaccines = ref([])
+const allVaccines = ref([])
 const reportsHistory = ref([])
 const selectedImages = ref([])
+const fileInputRef = ref(null)
 
 const loadingHistory = ref(true)
 const submitting = ref(false)
+const selectedVaccineKey = ref('')
 
 const formData = ref({
   child_id: null,
-  child_vaccination_id: null,
   reaction_type: '',
   severity: 'mild',
   onset_date: new Date().toISOString().substring(0, 10),
@@ -361,16 +373,18 @@ const formData = ref({
   outcome: 'unknown'
 })
 
-// Filter completed vaccines for the selected child
-const filteredCompletedVaccines = computed(() => {
+// Filter vaccines for the selected child (completed and scheduled)
+const availableVaccines = computed(() => {
   if (!formData.value.child_id) return []
-  return completedVaccines.value.filter(v => v.child_id === formData.value.child_id)
+  return allVaccines.value.filter(v => v.child_id === formData.value.child_id)
 })
 
 const vaccineOptions = computed(() => {
-  return filteredCompletedVaccines.value.map(v => ({
-    id: v.child_vaccination_id,
-    label: `${locale.value === 'bn' ? (v.vaccine_name_bn || v.vaccine_name) : v.vaccine_name} - ${v.dose_name} (${v.givenDate})`
+  return availableVaccines.value.map(v => ({
+    id: v.child_vaccination_id ? `cv_${v.child_vaccination_id}` : `sch_${v.schedule_id}`,
+    child_vaccination_id: v.child_vaccination_id || null,
+    schedule_id: v.schedule_id,
+    label: `${locale.value === 'bn' ? (v.vaccine_name_bn || v.vaccine_name) : v.vaccine_name} - ${v.dose_name}${v.status === 'completed' ? ' (✅)' : ''}`
   }))
 })
 
@@ -381,19 +395,15 @@ const outcomeOptions = computed(() => {
   }))
 })
 
-
-
 onMounted(async () => {
   // Load cached children and vaccinations list immediately
   const cachedVaccines = await CP.get('vaccination_list')
   if (cachedVaccines) {
     children.value = cachedVaccines.children || []
-    completedVaccines.value = (cachedVaccines.vaccines || []).filter(v => v.status === 'completed' && v.child_vaccination_id)
+    allVaccines.value = cachedVaccines.vaccines || []
     if (children.value.length > 0) {
       formData.value.child_id = children.value[0].id
-      if (filteredCompletedVaccines.value.length > 0) {
-        formData.value.child_vaccination_id = filteredCompletedVaccines.value[0].child_vaccination_id
-      }
+      initSelectedVaccine()
     }
   }
 
@@ -413,30 +423,34 @@ const handleRefresh = async (event) => {
   event.target.complete()
 }
 
-const handleChildChange = () => {
-  if (filteredCompletedVaccines.value.length > 0) {
-    formData.value.child_vaccination_id = filteredCompletedVaccines.value[0].child_vaccination_id
+const initSelectedVaccine = () => {
+  if (vaccineOptions.value.length > 0) {
+    if (!selectedVaccineKey.value || !vaccineOptions.value.some(opt => opt.id === selectedVaccineKey.value)) {
+      selectedVaccineKey.value = vaccineOptions.value[0].id
+    }
   } else {
-    formData.value.child_vaccination_id = null
+    selectedVaccineKey.value = ''
   }
+}
+
+const handleChildChange = () => {
+  initSelectedVaccine()
 }
 
 const syncData = async () => {
   try {
-    // 1. Refresh vaccinations to make sure we have latest completed doses
+    // 1. Refresh vaccinations to make sure we have latest data
     const vResult = await getData({ url: 'vaccinations', rtn: true })
     if (vResult) {
       children.value = vResult.children || []
-      completedVaccines.value = (vResult.vaccines || []).filter(v => v.status === 'completed' && v.child_vaccination_id)
+      allVaccines.value = vResult.vaccines || []
       await CP.set('vaccination_list', vResult)
       
       // Update form selections if empty
       if (!formData.value.child_id && children.value.length > 0) {
         formData.value.child_id = children.value[0].id
       }
-      if (formData.value.child_id && !formData.value.child_vaccination_id && filteredCompletedVaccines.value.length > 0) {
-        formData.value.child_vaccination_id = filteredCompletedVaccines.value[0].child_vaccination_id
-      }
+      initSelectedVaccine()
     }
 
     // 2. Refresh AEFI reports from backend
@@ -457,26 +471,35 @@ const submitReport = async () => {
   const validate = await F.validate()
   if (!validate) return
 
-  if (!formData.value.child_vaccination_id) {
+  const selectedOpt = vaccineOptions.value.find(opt => opt.id === selectedVaccineKey.value)
+  if (!selectedOpt) {
     showToast(t('aefi.submit_error'), 'danger')
     return
   }
 
   submitting.value = true
   try {
+    const payload = {
+      reaction_type: formData.value.reaction_type,
+      severity: formData.value.severity,
+      onset_date: formData.value.onset_date,
+      onset_time: formData.value.onset_time,
+      symptoms: formData.value.symptoms,
+      action_taken: formData.value.action_taken,
+      outcome: formData.value.outcome,
+      photos: selectedImages.value.map(img => img.serverPath).filter(Boolean)
+    }
+
+    if (selectedOpt.child_vaccination_id) {
+      payload.child_vaccination_id = selectedOpt.child_vaccination_id
+    } else {
+      payload.child_id = formData.value.child_id
+      payload.schedule_id = selectedOpt.schedule_id
+    }
+
     const res = await submitData({
       url: 'aefi-reports',
-      data: {
-        child_vaccination_id: formData.value.child_vaccination_id,
-        reaction_type: formData.value.reaction_type,
-        severity: formData.value.severity,
-        onset_date: formData.value.onset_date,
-        onset_time: formData.value.onset_time,
-        symptoms: formData.value.symptoms,
-        action_taken: formData.value.action_taken,
-        outcome: formData.value.outcome,
-        photos: selectedImages.value.map(img => img.serverPath).filter(Boolean)
-      },
+      data: payload,
       rtn: true
     })
 
@@ -519,8 +542,9 @@ const takePhoto = async () => {
       await uploadImage(image.dataUrl)
     }
   } catch (err) {
-    if (err.message !== 'User cancelled photos app') {
-      console.error('Camera capture error:', err)
+    if (err?.message !== 'User cancelled photos app') {
+      console.warn('Camera capture fallback to file picker:', err)
+      fileInputRef.value?.click()
     }
   }
 }
@@ -538,10 +562,25 @@ const selectGallery = async () => {
       await uploadImage(image.dataUrl)
     }
   } catch (err) {
-    if (err.message !== 'User cancelled photos app') {
-      console.error('Gallery selection error:', err)
+    if (err?.message !== 'User cancelled photos app') {
+      console.warn('Gallery fallback to file picker:', err)
+      fileInputRef.value?.click()
     }
   }
+}
+
+const handleFileChange = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    const dataUrl = e.target?.result
+    if (dataUrl) {
+      await uploadImage(dataUrl)
+    }
+  }
+  reader.readAsDataURL(file)
+  event.target.value = ''
 }
 
 const uploadImage = async (dataUrl) => {

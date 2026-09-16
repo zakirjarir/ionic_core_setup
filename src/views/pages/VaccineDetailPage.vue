@@ -84,18 +84,28 @@
 
           <div class="space-y-3">
             <div
-                v-for="hospital in demoHospitals"
-                :key="hospital.name"
+                v-for="hospital in hospitals"
+                :key="hospital.id || hospital.code || hospital.name"
                 class="flex flex-col gap-2.5 p-3.5 rounded-2xl border border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-800/20"
             >
               <div class="flex justify-between items-start">
                 <div class="min-w-0">
                   <h4 class="font-bold text-zinc-900 dark:text-white text-sm truncate">
-                    {{ locale === 'bn' ? hospital.name_bn : hospital.name }}
+                    {{ locale === 'bn' ? (hospital.name_bn || hospital.name) : hospital.name }}
                   </h4>
                   <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex items-start gap-1">
                     <ion-icon :icon="businessOutline" class="flex-shrink-0 text-zinc-400 mt-0.5" />
-                    <span>{{ locale === 'bn' ? hospital.address_bn : hospital.address }}</span>
+                    <span>
+                      {{ hospital.type || (locale === 'bn' ? hospital.type_bn : '') || 'Health Center' }}
+                      <template v-if="hospital.organization"> · {{ hospital.organization }}</template>
+                    </span>
+                  </p>
+                  <p v-if="hospital.address" class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex items-start gap-1">
+                    <ion-icon :icon="locationOutline" class="flex-shrink-0 text-zinc-400 mt-0.5" />
+                    <span>{{ locale === 'bn' ? (hospital.address_bn || hospital.address) : hospital.address }}</span>
+                  </p>
+                  <p v-if="hospital.phone" class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    ☎ {{ hospital.phone }}
                   </p>
                 </div>
                 <span class="px-2 py-0.5 text-[9px] font-extrabold rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
@@ -104,12 +114,13 @@
               </div>
 
               <div class="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/80 pt-2 text-[10px] text-zinc-500 dark:text-zinc-400">
-                <span>🕒 {{ locale === 'bn' ? hospital.hours_bn : hospital.hours }}</span>
+                <span>{{ hospital.code || '' }}</span>
                 <ion-button
                     size="small"
                     fill="clear"
                     class="text-emerald-600 dark:text-emerald-400 font-bold"
                     style="--padding-start: 4px; --padding-end: 4px; height: 24px; margin: 0;"
+                    @click="openHospitalMap(hospital)"
                 >
                   <ion-icon slot="start" :icon="locationOutline" />
                   {{ t('vaccination.view_map') || 'View Map' }}
@@ -157,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -182,32 +193,59 @@ const loading = ref(true)
 const cacheKey = () => `vaccine_detail_${route.params.id}`
 
 // Demo hospital list
-const demoHospitals = ref([
-  {
-    name: 'Upazila Health Complex',
-    name_bn: 'উপজেলা স্বাস্থ্য কমপ্লেক্স',
-    address: 'Sadar Road, Upazila Headquarter',
-    address_bn: 'সদর রোড, উপজেলা সদর দপ্তর',
-    hours: '8:00 AM - 2:00 PM (Sat - Thu)',
-    hours_bn: 'সকাল ৮:০০ - দুপুর ২:০০ (শনি - বৃহস্পতি)'
-  },
-  {
-    name: 'District General Hospital',
-    name_bn: 'জেলা সদর হাসপাতাল',
-    address: 'Hospital Road, District Center',
-    address_bn: 'হাসপাতাল রোড, জেলা সদর',
-    hours: '24 Hours Open',
-    hours_bn: '২৪ ঘণ্টা খোলা'
-  },
-  {
-    name: 'BIVEEC Community Clinic',
-    name_bn: 'বাইভিক কমিউনিটি ক্লিনিক',
-    address: 'Word No. 3, Near Primary School',
-    address_bn: 'ওয়ার্ড নং ৩, প্রাথমিক বিদ্যালয়ের নিকট',
-    hours: '9:00 AM - 1:00 PM (Sat - Wed)',
-    hours_bn: 'সকাল ৯:০০ - দুপুর ১:০০ (শনি - বুধ)'
+const hospitals = computed(() => {
+  const backendHospitals = vaccine.value?.hospitals
+    || vaccine.value?.clinics
+    || vaccine.value?.health_centers
+    || vaccine.value?.vaccination_centers
+    || vaccine.value?.centers
+    || vaccine.value?.health_facilities
+
+  return Array.isArray(backendHospitals) ? backendHospitals : []
+})
+
+const getHospitalCoordinates = (hospital) => {
+  const location = hospital?.location || hospital?.coordinates || {}
+  const latitude = hospital?.latitude
+    ?? hospital?.lat
+    ?? hospital?.clinic_latitude
+    ?? hospital?.clinic_lat
+    ?? location.latitude
+    ?? location.lat
+  const longitude = hospital?.longitude
+    ?? hospital?.lng
+    ?? hospital?.lon
+    ?? hospital?.clinic_longitude
+    ?? hospital?.clinic_lng
+    ?? location.longitude
+    ?? location.lng
+
+  if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) {
+    return null
   }
-])
+
+  return {
+    latitude: Number(latitude),
+    longitude: Number(longitude)
+  }
+}
+
+const openHospitalMap = (hospital) => {
+  const coordinates = getHospitalCoordinates(hospital)
+  const name = hospital?.name || hospital?.name_bn || ''
+  const address = hospital?.address || hospital?.address_bn || ''
+  const query = coordinates
+    ? `${coordinates.latitude},${coordinates.longitude}`
+    : `${name} ${address}`.trim()
+
+  if (!query) {
+    console.error('Hospital map location is unavailable:', hospital)
+    return
+  }
+
+  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+  window.open(mapUrl, '_blank', 'noopener,noreferrer')
+}
 
 onIonViewWillEnter(async () => {
   const scheduleId = Number(route.params.id)

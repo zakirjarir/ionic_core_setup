@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+ import { ref } from 'vue'
 import api from "@/services/api/index.js"
 import { useStore } from './useStore.js';
 import { useAlert } from './useAlert.js';
@@ -8,6 +8,9 @@ import { Capacitor } from '@capacitor/core'
 
 
 import i18n from '@/i18n'
+
+let locationWatchId = null
+let lastSyncedLocation = null
 
 
 export const useFunction = () => {
@@ -28,6 +31,10 @@ export const useFunction = () => {
         if (!$path) {return null}
         // base64 dataUrl হলে সরাসরি return করো
         if (typeof $path === 'string' && $path.startsWith('data:')) {
+            return $path
+        }
+        // API থেকে full URL এলে সেটি আবার mainUrl-এর সাথে জোড়া দিও না
+        if (typeof $path === 'string' && /^https?:\/\//i.test($path)) {
             return $path
         }
         return `${store.mainUrl}/${$path}`
@@ -101,12 +108,15 @@ export const useFunction = () => {
 
             const method = (obj.method || 'post').toLowerCase()
 
+            const isChatbot = typeof obj.url === 'string' && obj.url.includes('chatbot');
+            const defaultTimeout = isChatbot ? 60000 : 10000;
+
             // ⭐ axios config object
             const config = {
                 params: obj.params || undefined,
                 responseType: obj.responseType || 'json',
                 headers: obj.headers || {},
-                timeout: obj.timeout || undefined,
+                timeout: obj.timeout || defaultTimeout,
             }
 
             if (method === 'get') {
@@ -125,10 +135,21 @@ export const useFunction = () => {
                 responseData = await api.patch(obj.url, obj.data, config)
             }
 
-            //  Auth fail
-            if (responseData && responseData.data && parseInt(responseData.data.status) === 4001) {
+            // Auth fail
+            const resMsg = responseData?.data?.message
+            const resStatus = parseInt(responseData?.data?.status)
+            if (
+                resMsg === 'Unauthenticated.' ||
+                resMsg === 'Unauthenticated' ||
+                resStatus === 4001 ||
+                resStatus === 401
+            ) {
+                await CP.remove('auth_token')
+                await CP.remove('user')
+                store.authToken = null
+                store.user = null
 
-                const isAuthPage = window.location.pathname.startsWith('/auth') || window.location.pathname === '/';
+                const isAuthPage = window.location.pathname.startsWith('/auth')
                 if (!isAuthPage) {
                     window.location.href = '/auth/login'
                 }
@@ -138,11 +159,32 @@ export const useFunction = () => {
         } catch (err) {
             error.value = err
             console.error(err)
+
+            const errMsg = err.response?.data?.message
+            const errStatus = err.response?.status
+            const errDataStatus = parseInt(err.response?.data?.status)
+
+            const isUnauth =
+                errStatus === 401 ||
+                errMsg === 'Unauthenticated.' ||
+                errMsg === 'Unauthenticated' ||
+                errDataStatus === 4001 ||
+                errDataStatus === 401
+
+            if (isUnauth) {
+                await CP.remove('auth_token')
+                await CP.remove('user')
+                store.authToken = null
+                store.user = null
+
+                const isAuthPage = window.location.pathname.startsWith('/auth')
+                if (!isAuthPage) {
+                    window.location.href = '/auth/login'
+                }
+                return null
+            }
+
             await toastAlert('error', 'Server error or network problem.')
-            //
-            // if (err.response?.status === 401) {
-            //     window.location.href = '/auth/login'
-            // }
         } finally {
             loading.value = false
         }
@@ -177,14 +219,24 @@ export const useFunction = () => {
                 data
             });
 
-            if(parseInt(readData?.status) === 2000){
-                if(rtn){
+            if (!readData) {
+                return null
+            }
+
+            if (parseInt(readData?.status) === 2000) {
+                if (rtn) {
                     return readData.result
                 }
                 store.data = readData.result
-            }
-            else {
-                toastAlert(parseInt(readData?.status) ,readData.message)
+            } else if (
+                readData?.message === 'Unauthenticated.' ||
+                readData?.message === 'Unauthenticated' ||
+                parseInt(readData?.status) === 4001 ||
+                parseInt(readData?.status) === 401
+            ) {
+                return null
+            } else {
+                toastAlert(parseInt(readData?.status), readData.message)
             }
         }catch (err){
             console.error(err)
@@ -315,6 +367,7 @@ export const useFunction = () => {
             rtn = false,
             rtnFullResp = false,
             method: callerMethod = false,
+            timeout = undefined,
         } = submitObject;
 
         const formData = data || store.formData || {};
@@ -341,6 +394,7 @@ export const useFunction = () => {
                 method: finalMethod,
                 url: finalUrl,
                 data: formData,
+                timeout,
             });
 
             if(rtnFullResp){
@@ -471,10 +525,84 @@ export const useFunction = () => {
 
         if (user) {
             return user;
-        }
-        else {
+        } else {
             return null;
         }
+    }
+
+    const updateDeviceLocation = async (data) => {
+        return await httpReq({
+            url: urlGenerate('profile/update-location'),
+            method: 'post',
+            data,
+        })
+    }
+
+    const syncDeviceLocation = async () => {
+        if (!navigator.geolocation) {
+            throw new Error('Device geolocation is unavailable')
+        }
+
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000,
+            })
+        })
+
+        const result = await updateDeviceLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+        })
+
+        if (parseInt(result?.status) !== 2000) {
+            throw new Error(result?.message || 'Location update failed')
+        }
+
+        return result
+    }
+
+    const startDeviceLocationTracking = () => {
+        if (locationWatchId !== null || !navigator.geolocation) {
+            return
+        }
+
+        locationWatchId = navigator.geolocation.watchPosition(async (position) => {
+            const nextLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+            }
+
+            if (lastSyncedLocation) {
+                const latitudeDelta = Math.abs(nextLocation.latitude - lastSyncedLocation.latitude)
+                const longitudeDelta = Math.abs(nextLocation.longitude - lastSyncedLocation.longitude)
+                if (Math.sqrt(latitudeDelta ** 2 + longitudeDelta ** 2) < 0.001) {
+                    return
+                }
+            }
+
+            try {
+                await updateDeviceLocation(nextLocation)
+                lastSyncedLocation = nextLocation
+            } catch (error) {
+                console.error('Unable to update device location:', error)
+            }
+        }, (error) => {
+            console.error('Device location tracking error:', error)
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 300000,
+            timeout: 10000,
+        })
+    }
+
+    const stopDeviceLocationTracking = () => {
+        if (locationWatchId !== null && navigator.geolocation) {
+            navigator.geolocation.clearWatch(locationWatchId)
+        }
+        locationWatchId = null
+        lastSyncedLocation = null
     }
 
 
@@ -738,10 +866,12 @@ export const useFunction = () => {
 
         try {
             const date = new Date(dateString);
+            if (isNaN(date.getTime())) return String(dateString);
+            const str = String(dateString);
 
             const hasTime =
-                dateString.includes('T') ||
-                /\d{2}:\d{2}/.test(dateString);
+                str.includes('T') ||
+                /\d{2}:\d{2}/.test(str);
 
             const options = {
                 year: 'numeric',
@@ -757,7 +887,7 @@ export const useFunction = () => {
 
             return new Intl.DateTimeFormat('bn-BD', options).format(date);
         } catch (e) {
-            return dateString;
+            return String(dateString);
         }
     };
 
@@ -772,17 +902,21 @@ export const useFunction = () => {
         window.location.href = '/auth/login'
     }
 
-    const loadUser = async () =>{
-      const cachedUser = await CP.get('user')
-      if (cachedUser) {
-          store.user = cachedUser
-      }
+    const loadUser = async () => {
+      try {
+        const cachedUser = await CP.get('user')
+        if (cachedUser) {
+            store.user = cachedUser
+        }
 
-      const user  = await getData({url:'me',rtn:true})
-      if (user){
-          await CP.remove('user')
-          await CP.set('user',user)
-          store.user = user
+        const user = await getData({ url: 'me', rtn: true })
+        if (user) {
+            await CP.remove('user')
+            await CP.set('user', user)
+            store.user = user
+        }
+      } catch (err) {
+        console.error('loadUser error:', err)
       }
     }
 
@@ -941,6 +1075,10 @@ export const useFunction = () => {
         checkDuplicate,
         getConfiguration,
         submitData,
+        updateDeviceLocation,
+        syncDeviceLocation,
+        startDeviceLocationTracking,
+        stopDeviceLocationTracking,
         print,
         formatNumber,
         formatPrice,

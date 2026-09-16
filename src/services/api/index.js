@@ -5,9 +5,37 @@ import { useCP } from '../../composables/useCP.js'
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '',
+    timeout: 10000,
 })
 
 const { get, remove } = useCP()
+
+let isRedirecting = false
+
+const redirectToLogin = async () => {
+    if (isRedirecting) return
+    isRedirecting = true
+
+    try {
+        await remove('auth_token')
+        await remove('user')
+    } catch (e) {
+        console.error('Error clearing auth credentials:', e)
+    }
+
+    const currentPath = window.location.pathname
+    if (!currentPath.startsWith('/auth')) {
+        if (router && router.currentRoute?.value?.path !== '/auth/login') {
+            router.replace('/auth/login')
+        } else {
+            window.location.href = '/auth/login'
+        }
+    }
+
+    setTimeout(() => {
+        isRedirecting = false
+    }, 1500)
+}
 
 // Request Interceptor
 api.interceptors.request.use(async (config) => {
@@ -22,14 +50,32 @@ api.interceptors.request.use(async (config) => {
 
 // Response Interceptor
 api.interceptors.response.use(
-    (response) => response,
+    async (response) => {
+        const msg = response?.data?.message
+        const status = parseInt(response?.data?.status)
+        if (
+            msg === 'Unauthenticated.' ||
+            msg === 'Unauthenticated' ||
+            status === 4001 ||
+            status === 401
+        ) {
+            await redirectToLogin()
+        }
+        return response
+    },
     async (error) => {
-        if (error.response?.status === 401) {
+        const msg = error.response?.data?.message
+        const status = error.response?.status
+        const dataStatus = parseInt(error.response?.data?.status)
 
-            await remove('auth_token')
-
-            // Login Page Redirect
-            router.replace('/auth/login')
+        if (
+            status === 401 ||
+            msg === 'Unauthenticated.' ||
+            msg === 'Unauthenticated' ||
+            dataStatus === 4001 ||
+            dataStatus === 401
+        ) {
+            await redirectToLogin()
         }
 
         return Promise.reject(error)

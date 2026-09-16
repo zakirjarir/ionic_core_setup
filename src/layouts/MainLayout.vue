@@ -188,15 +188,22 @@ onIonViewWillEnter(async () => {
   }
 
   // Load unread notifications count from cache immediately
-  const cachedNotifs = await CP.get('cached_notifications', [])
-  store.unreadNotificationsCount = cachedNotifs.filter(n => !n.read).length
+  try {
+    const cachedNotifs = await CP.get('cached_notifications', [])
+    if (Array.isArray(cachedNotifs)) {
+      store.unreadNotificationsCount = cachedNotifs.filter(n => !n?.read).length
+    }
+  } catch (e) {
+    console.error('Error loading cached notifications:', e)
+  }
 
   // Sync notifications in background
   try {
     const result = await getData({ url: 'notifications', rtn: true })
     if (result) {
-      store.unreadNotificationsCount = result.filter(n => !n.read).length
-      await CP.set('cached_notifications', result)
+      const list = Array.isArray(result) ? result : (Array.isArray(result?.data) ? result.data : [])
+      store.unreadNotificationsCount = list.filter(n => !n?.read).length
+      await CP.set('cached_notifications', list)
     }
   } catch (err) {
     console.error('Failed to sync notifications in MainLayout:', err)

@@ -77,3 +77,13 @@ ion-tabs ion-content {
   --padding-bottom: 110px !important;
 }
 
+/* Vaccine battle background image for light/dark themes */
+.vaccine-battle-bg {
+  background-image: url('/images/vaccine_battle_light.png') !important;
+  box-shadow: 0 0 22px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+.dark .vaccine-battle-bg {
+  background-image: url('/images/vaccne_battle_dark.png') !important;
+  box-shadow: 0 0 25px 3px rgba(0, 0, 0, 0.6) !important;
+}

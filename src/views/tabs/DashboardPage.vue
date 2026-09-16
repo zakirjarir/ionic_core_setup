@@ -86,21 +86,9 @@
       <template v-if="dbChildren.length > 0">
         <!-- Next Vaccine Card -->
         <div
-            class="mx-4 my-3 relative overflow-hidden rounded-3xl bg-cover bg-center bg-no-repeat shadow-lg"
-            style="background-image: url('/images/vaccine_battle.png'); min-height: 190px;"
+            class="mx-4 my-3 relative overflow-hidden rounded-3xl bg-cover bg-center bg-no-repeat vaccine-battle-bg"
+            style="min-height: 190px;"
         >
-          <!-- Overlay -->
-          <div
-              class="absolute inset-0
-             bg-gradient-to-r
-             from-white/95
-             via-cyan-50/80
-             to-teal-100/20
-             dark:from-zinc-950/95
-             dark:via-zinc-900/80
-             dark:to-zinc-950/20"
-          ></div>
-
           <!-- Content -->
           <div class="relative z-10 p-4 flex h-full items-center">
             <div class="max-w-[58%]">
@@ -134,7 +122,7 @@
                    px-3 py-1.5 text-xs
                    dark:bg-zinc-800/70"
                 >
-                  <IonIcon
+                  <ion-icon
                       :icon="calendarOutline"
                       class="text-sm"
                   />
@@ -147,7 +135,7 @@
                    px-3 py-1.5 text-xs
                    dark:bg-orange-900/20"
                 >
-                  <IonIcon
+                  <ion-icon
                       :icon="timeOutline"
                       class="text-sm text-orange-500"
                   />
@@ -320,7 +308,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   IonPage, IonContent, IonIcon, IonButton, onIonViewWillEnter,
   IonRefresher, IonRefresherContent
@@ -359,32 +347,43 @@ const dbNotifications = ref([])
 const activeChildId = ref(null)
 
 const loadDashboardData = async () => {
-  // 1. Try to load user and cached data from CP
-  user.value = await CP.get('user') || {}
+  // 1. Try to load user and cached data from CP safely
+  try {
+    user.value = (await CP.get('user')) || {}
+  } catch (e) {
+    user.value = {}
+  }
   
-  const cachedVaccines = await CP.get('vaccination_list')
-  if (cachedVaccines) {
-    dbChildren.value = cachedVaccines.children || []
-    dbVaccines.value = cachedVaccines.vaccines || []
-    if (dbChildren.value.length > 0 && !activeChildId.value) {
-      activeChildId.value = dbChildren.value[0].id
+  try {
+    const cachedVaccines = await CP.get('vaccination_list')
+    if (cachedVaccines) {
+      dbChildren.value = Array.isArray(cachedVaccines.children) ? cachedVaccines.children : []
+      dbVaccines.value = Array.isArray(cachedVaccines.vaccines) ? cachedVaccines.vaccines : []
+      if (dbChildren.value.length > 0 && !activeChildId.value) {
+        activeChildId.value = dbChildren.value[0].id
+      }
     }
+  } catch (e) {
+    console.error('Error loading cached vaccines:', e)
   }
 
-  const cachedNotes = await CP.get('cached_notifications', [])
-  if (cachedNotes) {
-    dbNotifications.value = cachedNotes
+  try {
+    const cachedNotes = await CP.get('cached_notifications', [])
+    if (Array.isArray(cachedNotes)) {
+      dbNotifications.value = cachedNotes
+    }
+  } catch (e) {
+    console.error('Error loading cached notifications:', e)
   }
 
   // 2. Fetch fresh data from the server
   try {
     const vResult = await getData({ url: 'vaccinations', rtn: true })
     if (vResult) {
-      dbChildren.value = vResult.children || []
-      dbVaccines.value = vResult.vaccines || []
+      dbChildren.value = Array.isArray(vResult.children) ? vResult.children : []
+      dbVaccines.value = Array.isArray(vResult.vaccines) ? vResult.vaccines : []
       await CP.set('vaccination_list', vResult)
       
-      // If we don't have an active child selected or the selected child doesn't exist anymore, select the first
       if (dbChildren.value.length > 0 && (!activeChildId.value || !dbChildren.value.find(c => c.id === activeChildId.value))) {
         activeChildId.value = dbChildren.value[0].id
       }
@@ -392,13 +391,17 @@ const loadDashboardData = async () => {
 
     const nResult = await getData({ url: 'notifications', rtn: true })
     if (nResult) {
-      dbNotifications.value = nResult
-      await CP.set('cached_notifications', nResult)
+      dbNotifications.value = Array.isArray(nResult) ? nResult : (Array.isArray(nResult?.data) ? nResult.data : [])
+      await CP.set('cached_notifications', dbNotifications.value)
     }
   } catch (err) {
     console.error('Error fetching dashboard data:', err)
   }
 }
+
+onMounted(async () => {
+  await loadDashboardData()
+})
 
 onIonViewWillEnter(async () => {
   await loadDashboardData()
@@ -431,52 +434,68 @@ const calculateAge = (dob) => {
 const nextVaccine = computed(() => {
   if (!activeChildId.value) {
     return {
-      name: t('dashboard.no_upcoming') || 'No upcoming vaccines',
+      name: t('dashboard.no_upcoming', 'No upcoming vaccines'),
       date: '--',
       remaining: '--'
     }
   }
-  const upcoming = dbVaccines.value.filter(v => v.child_id === activeChildId.value && v.status === 'upcoming')
+  const upcoming = Array.isArray(dbVaccines.value)
+    ? dbVaccines.value.filter(v => v && v.child_id === activeChildId.value && v.status === 'upcoming')
+    : []
   if (upcoming.length === 0) {
     return {
-      name: t('dashboard.all_caught_up') || 'All Caught Up',
+      name: t('dashboard.all_caught_up', 'All Caught Up'),
       date: '--',
-      remaining: t('dashboard.no_upcoming') || 'No upcoming vaccines'
+      remaining: t('dashboard.no_upcoming', 'No upcoming vaccines')
     }
   }
   
-  // Sort by due date ascending
-  const sorted = upcoming.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+  // Sort by due date ascending safely
+  const sorted = [...upcoming].sort((a, b) => {
+    const da = a?.dueDate || a?.due_date ? new Date(a.dueDate || a.due_date).getTime() : 0
+    const db = b?.dueDate || b?.due_date ? new Date(b.dueDate || b.due_date).getTime() : 0
+    return da - db
+  })
   const next = sorted[0]
-  
-  // Calculate remaining days
-  const due = new Date(next.dueDate)
-  const today = new Date()
-  // reset hours to midnight for date diff
-  due.setHours(0,0,0,0)
-  today.setHours(0,0,0,0)
-  const diffTime = due - today
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
-  let remainingStr = ''
-  if (diffDays < 0) {
-    remainingStr = t('vaccination.overdue') || 'Overdue'
-  } else if (diffDays === 0) {
-    remainingStr = t('vaccination.due_today') || 'Due Today'
-  } else {
-    remainingStr = locale.value === 'bn' ? `${diffDays} দিন বাকি` : `${diffDays} days remaining`
+  if (!next) {
+    return {
+      name: t('dashboard.no_upcoming', 'No upcoming vaccines'),
+      date: '--',
+      remaining: '--'
+    }
+  }
+
+  const rawDate = next.dueDate || next.due_date
+  let remainingStr = '--'
+  if (rawDate) {
+    const due = new Date(rawDate)
+    if (!isNaN(due.getTime())) {
+      const today = new Date()
+      due.setHours(0,0,0,0)
+      today.setHours(0,0,0,0)
+      const diffTime = due.getTime() - today.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays < 0) {
+        remainingStr = t('vaccination.overdue') || 'Overdue'
+      } else if (diffDays === 0) {
+        remainingStr = t('vaccination.due_today') || 'Due Today'
+      } else {
+        remainingStr = locale.value === 'bn' ? `${diffDays} দিন বাকি` : `${diffDays} days remaining`
+      }
+    }
   }
 
   return {
-    name: locale.value === 'bn' ? (next.vaccine_name_bn || next.vaccine_name) : next.vaccine_name,
-    date: formatDate(next.dueDate),
+    name: locale.value === 'bn' ? (next.vaccine_name_bn || next.vaccine_name || '') : (next.vaccine_name || ''),
+    date: rawDate ? formatDate(rawDate) : '--',
     remaining: remainingStr
   }
 })
 
 // Progress for selected child
-const totalVaccines = computed(() => dbVaccines.value.filter(v => v.child_id === activeChildId.value).length)
-const completedVaccines = computed(() => dbVaccines.value.filter(v => v.child_id === activeChildId.value && v.status === 'completed').length)
+const totalVaccines = computed(() => Array.isArray(dbVaccines.value) ? dbVaccines.value.filter(v => v && v.child_id === activeChildId.value).length : 0)
+const completedVaccines = computed(() => Array.isArray(dbVaccines.value) ? dbVaccines.value.filter(v => v && v.child_id === activeChildId.value && v.status === 'completed').length : 0)
 const progress = computed(() => totalVaccines.value > 0 ? Math.round((completedVaccines.value / totalVaccines.value) * 100) : 0)
 const circumference = 2 * Math.PI * 42 // r=42
 
@@ -518,38 +537,52 @@ const quickActions = computed(() => [
 
 // Upcoming Schedules for all children
 const upcomingSchedules = computed(() => {
-  const upcoming = dbVaccines.value.filter(v => v.status === 'upcoming')
-  const sorted = upcoming.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 3)
+  if (!Array.isArray(dbVaccines.value)) return []
+  const upcoming = dbVaccines.value.filter(v => v && v.status === 'upcoming')
+  const sorted = [...upcoming].sort((a, b) => {
+    const da = a?.dueDate || a?.due_date ? new Date(a.dueDate || a.due_date).getTime() : 0
+    const db = b?.dueDate || b?.due_date ? new Date(b.dueDate || b.due_date).getTime() : 0
+    return da - db
+  }).slice(0, 3)
+
   return sorted.map(v => {
-    const child = dbChildren.value.find(c => c.id === v.child_id)
+    const child = Array.isArray(dbChildren.value) ? dbChildren.value.find(c => c && c.id === v.child_id) : null
     const childName = child ? child.name : ''
     const childAge = child ? calculateAge(child.dob) : ''
     const childAvatar = child ? child.photo : null
     
-    const d = new Date(v.dueDate)
-    const day = d.getDate()
-    const monthNames = locale.value === 'bn' 
-      ? ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টে", "অক্টো", "নভে", "ডিসে"]
-      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    const monthYear = `${monthNames[d.getMonth()]} ${d.getFullYear()}`
-    
-    const dueTime = new Date(v.dueDate).setHours(0,0,0,0)
-    const todayTime = new Date().setHours(0,0,0,0)
-    const diffTime = dueTime - todayTime
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+    const rawDate = v.dueDate || v.due_date
+    let day = '--'
+    let monthYear = '--'
     let remaining = ''
-    if (diffDays < 0) remaining = t('vaccination.overdue') || 'Overdue'
-    else if (diffDays === 0) remaining = t('vaccination.due_today') || 'Today'
-    else remaining = locale.value === 'bn' ? `${diffDays} দিন বাকি` : `${diffDays}d left`
+
+    if (rawDate) {
+      const d = new Date(rawDate)
+      if (!isNaN(d.getTime())) {
+        day = String(d.getDate())
+        const monthNames = locale.value === 'bn' 
+          ? ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টে", "অক্টো", "নভে", "ডিসে"]
+          : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        monthYear = `${monthNames[d.getMonth()] || ''} ${d.getFullYear()}`
+        
+        const dueTime = new Date(d).setHours(0,0,0,0)
+        const todayTime = new Date().setHours(0,0,0,0)
+        const diffTime = dueTime - todayTime
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        if (diffDays < 0) remaining = t('vaccination.overdue') || 'Overdue'
+        else if (diffDays === 0) remaining = t('vaccination.due_today') || 'Today'
+        else remaining = locale.value === 'bn' ? `${diffDays} দিন বাকি` : `${diffDays}d left`
+      }
+    }
 
     return {
       id: v.id,
-      schedule_id: v.schedule_id,
-      day: String(day),
+      schedule_id: v.schedule_id || v.id,
+      day,
       monthYear,
-      vaccine: locale.value === 'bn' ? (v.vaccine_name_bn || v.vaccine_name) : v.vaccine_name,
-      detail: `(${v.dose_name})`,
+      vaccine: locale.value === 'bn' ? (v.vaccine_name_bn || v.vaccine_name || '') : (v.vaccine_name || ''),
+      detail: v.dose_name ? `(${v.dose_name})` : '',
       childName,
       childAge,
       childAvatar,
@@ -560,15 +593,16 @@ const upcomingSchedules = computed(() => {
 
 // Notifications
 const notificationsList = computed(() => {
+  if (!Array.isArray(dbNotifications.value)) return []
   return dbNotifications.value.slice(0, 3).map(n => {
     return {
-      id: n.id,
-      title: n.title,
-      desc: n.message,
-      time: n.time,
-      icon: n.type === 'warning' ? alertCircleOutline : informationCircleOutline,
-      iconColor: n.type === 'warning' ? 'text-amber-500 dark:text-amber-400' : 'text-blue-500 dark:text-blue-400',
-      read: n.read
+      id: n?.id,
+      title: n?.title || '',
+      desc: n?.message || '',
+      time: n?.time || '',
+      icon: n?.type === 'warning' ? alertCircleOutline : informationCircleOutline,
+      iconColor: n?.type === 'warning' ? 'text-amber-500 dark:text-amber-400' : 'text-blue-500 dark:text-blue-400',
+      read: !!n?.read
     }
   })
 })

@@ -19,8 +19,10 @@
               <button
                 v-for="t in themeOptions"
                 :key="t.value"
-                class="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 font-semibold text-[11px] transition-all cursor-pointer"
-                :class="{ 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400': themeStore.currentTheme === t.value }"
+                class="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all cursor-pointer font-semibold text-[11px]"
+                :class="themeStore.currentTheme === t.value
+                  ? 'border-2 border-indigo-600 dark:border-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 opacity-80 hover:opacity-100'"
                 @click="themeStore.setTheme(t.value)"
               >
                 <ion-icon :icon="t.icon" class="text-lg" />
@@ -45,8 +47,10 @@
               <button
                 v-for="lang in supportedLocales"
                 :key="lang.code"
-                class="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 font-semibold text-[11px] transition-all cursor-pointer"
-                :class="{ 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400': currentLocale === lang.code }"
+                class="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all cursor-pointer font-semibold text-[11px]"
+                :class="currentLocale === lang.code
+                  ? 'border-2 border-indigo-600 dark:border-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 opacity-80 hover:opacity-100'"
                 @click="setLanguage(lang.code)"
               >
                 <span class="text-base leading-none">{{ lang.code === 'en' ? '🇬🇧' : lang.code === 'bn' ? '🇧🇩' : '🇸🇦' }}</span>
@@ -148,7 +152,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
-  IonPage,  IonContent, IonIcon,
+  IonPage, IonContent, IonIcon, IonButton,
   IonToggle, alertController,
 } from '@ionic/vue'
 import {

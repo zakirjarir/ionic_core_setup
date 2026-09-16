@@ -12,8 +12,10 @@
           <button
             v-for="lang in supportedLocales"
             :key="lang.code"
-            class="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 cursor-pointer transition-all active:scale-[0.98] text-left"
-            :class="{ 'border-indigo-600 dark:border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 shadow-md shadow-indigo-500/5': currentLocale === lang.code }"
+            class="flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.98] text-left"
+            :class="currentLocale === lang.code
+              ? 'border-2 border-indigo-600 dark:border-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 shadow-md shadow-indigo-500/5'
+              : 'border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'"
             @click="selectLanguage(lang.code)"
           >
             <div class="text-3xl flex-shrink-0 leading-none">{{ flagMap[lang.code] }}</div>
@@ -25,8 +27,10 @@
               <ion-icon :icon="checkmarkCircleOutline" />
             </div>
             <div
-              class="text-[9px] font-extrabold uppercase px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 tracking-wider"
-              :class="{ 'bg-indigo-100/50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400': currentLocale === lang.code }"
+              class="text-[9px] font-extrabold uppercase px-2 py-1 rounded tracking-wider"
+              :class="currentLocale === lang.code
+                ? 'bg-indigo-100/80 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'"
             >
               {{ lang.dir }}
             </div>

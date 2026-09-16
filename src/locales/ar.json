@@ -89,8 +89,23 @@
   "chatbot": {
     "title": "روبوت الدردشة للذكاء الاصطناعي",
     "clear_chat": "مسح",
+    "assistant_name": "مساعد BIVEEC الذكي",
+    "online_status": "دعم صحي مخصص لطفلك",
+    "subtitle": "اسأل عن صحة أطفالك وتطعيماتهم ومواعيدهم",
+    "new_chat": "محادثة جديدة",
+    "history": "السجل",
+    "close_history": "إغلاق",
+    "no_history": "لا توجد محادثات محفوظة بعد.",
+    "delete_chat": "حذف المحادثة",
+    "delete_confirm": "هل تريد حذف هذه المحادثة نهائياً؟",
     "welcome_msg": "مرحباً! أنا مساعد BIVEEC الخاص بك. كيف يمكنني مساعدتك في جداول تطعيم الأطفال والنصائح الصحية اليوم؟",
-    "placeholder": "اكتب استفسارك..."
+    "placeholder": "اسأل عن طفلك...",
+    "suggestions": {
+      "polio": "جدول شلل الأطفال؟",
+      "side_effects": "الآثار الجانبية للتطعيم؟",
+      "add_child": "كيف أضيف طفلاً؟",
+      "bcg": "أخبرني عن BCG"
+    }
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -101,7 +116,9 @@
     "due_soon": "قريباً",
     "completed": "مكتمل",
     "overdue": "متأخر",
-    "view_all": "عرض الكل"
+    "view_all": "عرض الكل",
+    "all_caught_up": "تم استكمال جميع التطعيمات",
+    "no_upcoming": "لا توجد تطعيمات قادمة"
   },
   "children": {
     "title": "الأطفال",
@@ -112,7 +129,22 @@
     "male": "ذكر",
     "female": "أنثى",
     "no_children": "لم يتم إضافة أطفال بعد",
-    "no_children_sub": "أضف طفلك الأول للبدء"
+    "no_children_sub": "أضف طفلك الأول للبدء",
+    "preview_card": "معاينة البطاقة",
+    "both_sides": "كلا الجانبين",
+    "front_side": "الجانب الأمامي",
+    "back_side": "الجانب الخلفي",
+    "download_card": "تحميل البطاقة",
+    "download_both": "تحميل كلا الجانبين",
+    "download_front": "تحميل الجانب الأمامي",
+    "download_back": "تحميل الجانب الخلفي",
+    "download_success": "تم تحميل البطاقة بنجاح!",
+    "download_error": "فشل تحميل البطاقة. حاول ثانية.",
+    "flip_card": "قلب البطاقة",
+    "click_to_view": "انقر لمعاينة وتحميل البطاقة",
+    "guardian_info": "معلومات الولي",
+    "emergency_helpline": "خطوط المساعدة للطوارئ",
+    "card_disclaimer": "هذه البطاقة هي هوية صحية رقمية ضمن البرنامج الوطني للتحصين الموسع بنغلاديش. إذا عثرت عليها، يرجى تسليمها لأقرب مركز صحي."
   },
   "vaccination": {
     "title": "التطعيم",
@@ -167,7 +199,8 @@
     "logout": "تسجيل الخروج",
     "logout_confirm": "هل تريد تسجيل الخروج؟",
     "push_notifications": "إشعارات الدفع",
-    "email_notifications": "إشعارات البريد"
+    "email_notifications": "إشعارات البريد",
+    "notifications_section": "الإشعارات"
   },
   "language": {
     "title": "اللغة",

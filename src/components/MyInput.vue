@@ -360,7 +360,7 @@
               @ionChange="onRangeChange"
               :min="min"
               :max="max"
-              :step="step"
+              :step="Number(step)"
               :disabled="disabled || loading"
               :ticks="ticks"
               :snaps="snaps"
@@ -402,7 +402,7 @@
               :maxlength="maxlength"
               :min="min"
               :max="max"
-              :step="step"
+              :step="step !== undefined ? String(step) : undefined"
               :class="{
               'has-error': hasError,
               'touched': isTouched,
@@ -497,7 +497,7 @@ import { alertCircleOutline, chevronDownOutline, closeCircle, searchOutline } fr
 import { ref, computed, watch, inject, onMounted, onUnmounted } from 'vue'
 import { debounce } from 'lodash-es'
 import type { Ref } from 'vue'
-import type { SelectInterface } from '@ionic/core'
+import type { SelectInterface, AutocompleteTypes, TextFieldTypes } from '@ionic/core'
 import { useFunction, useStore } from '@/composables/index.js'
 import i18n from '@/i18n'
 
@@ -533,7 +533,7 @@ interface Props {
   clearable?: boolean
   helperText?: string
   name?: string
-  autocomplete?: string
+  autocomplete?: AutocompleteTypes
   storeErrorKey?: string
   icon?: any
   readonly?: boolean
@@ -543,7 +543,7 @@ interface Props {
   maxlength?: number
   min?: number
   max?: number
-  step?: number
+  step?: number | string
   showCounter?: boolean
 
   // Textarea specific
@@ -699,9 +699,13 @@ const removeSelectItem = (value: any) => {
 }
 
 // Computed
-const inputType = computed(() => {
-  const inputTypes = ['text', 'password', 'email', 'tel', 'number', 'url', 'search', 'date', 'time', 'datetime-local', 'month', 'week', 'color']
-  return inputTypes.includes(props.type) ? props.type : 'text'
+const inputType = computed<TextFieldTypes>(() => {
+  const allowedTypes: TextFieldTypes[] = [
+    'date', 'email', 'number', 'password', 'search', 'tel', 'text', 'url', 'time', 'week', 'month', 'datetime-local'
+  ]
+  return (props.type && allowedTypes.includes(props.type as TextFieldTypes))
+    ? (props.type as TextFieldTypes)
+    : 'text'
 })
 
 const storeErrorKey = computed(() => props.storeErrorKey || props.name)
@@ -1070,7 +1074,7 @@ const onSelectChange = (event: any) => {
 }
 
 
-const checkUniqueDebounced = debounce(async (v, param, resolve) => {
+const checkUniqueDebounced = debounce(async (v: any, param: string, resolve: (val: any) => void) => {
   const [tableName, field, ignoreUid] = param.split(':')
 
   try {
@@ -1259,8 +1263,8 @@ watch(storeError, (newError) => {
 })
 
 // Form registration
-const registerInput = inject('registerInput', null)
-const unregisterInput = inject('unregisterInput', null)
+const registerInput = inject<((api: any) => void) | null>('registerInput', null)
+const unregisterInput = inject<((api: any) => void) | null>('unregisterInput', null)
 
 const api = {
   validate,

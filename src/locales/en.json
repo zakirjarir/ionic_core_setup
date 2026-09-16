@@ -123,8 +123,23 @@
   "chatbot": {
     "title": "BIVEEC Chatbot",
     "clear_chat": "Clear",
+    "assistant_name": "BIVEEC AI Assistant",
+    "online_status": "Personalized child health support",
+    "subtitle": "Ask about your children's health, vaccines, and schedules",
+    "new_chat": "New chat",
+    "history": "History",
+    "close_history": "Close",
+    "no_history": "No saved chats yet.",
+    "delete_chat": "Delete chat",
+    "delete_confirm": "Delete this chat permanently?",
     "welcome_msg": "Hello! I am your BIVEEC Assistant. How can I help you with child vaccination schedules and health tips today?",
-    "placeholder": "Type your query..."
+    "placeholder": "Ask about your child...",
+    "suggestions": {
+      "polio": "Polio schedule?",
+      "side_effects": "Vaccine side effects?",
+      "add_child": "How to add a child?",
+      "bcg": "Tell me about BCG"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -171,7 +186,8 @@
     "note_desc_3": "Important health and protection tips for children",
     "time_2h": "2 hours ago",
     "time_1d": "1 day ago",
-    "time_2d": "2 days ago"
+    "time_2d": "2 days ago",
+    "all_caught_up": "All Caught Up"
   },
   "image_picker": {
     "title": "Choose Photo",
@@ -187,13 +203,11 @@
     "scanning": "Scanning...",
     "scan_success": "NID info extracted successfully",
     "scan_failed": "Could not extract NID info. Please try again.",
-
     "father_nid": "Father's NID",
     "mother_nid": "Mother's NID",
     "nid_name": "Name (from NID)",
     "nid_number": "NID Number",
     "nid_dob": "Date of Birth (from NID)",
-
     "front_side": "Front Side",
     "back_side": "Back Side",
     "capture_front": "Capture Front",
@@ -302,7 +316,22 @@
     "no_org_assigned": "No Center Assigned",
     "health_info": "Health & Birth Profile",
     "address_info": "Location & Address",
-    "edit_name": "Edit Child Name"
+    "edit_name": "Edit Child Name",
+    "preview_card": "Card Preview",
+    "both_sides": "Both Sides",
+    "front_side": "Front Side",
+    "back_side": "Back Side",
+    "download_card": "Download Card",
+    "download_both": "Download Both Sides",
+    "download_front": "Download Front Side",
+    "download_back": "Download Back Side",
+    "download_success": "Card downloaded successfully!",
+    "download_error": "Failed to download card. Please try again.",
+    "flip_card": "Flip Card",
+    "click_to_view": "Tap to preview & download full card",
+    "guardian_info": "Guardian Info",
+    "emergency_helpline": "Emergency Helpline",
+    "card_disclaimer": "This card is a digital health identity under the National EPI Bangladesh. If found, please return to nearest Health Center."
   },
   "vaccination": {
     "title": "Vaccination",
@@ -436,7 +465,8 @@
     "logout": "Logout",
     "logout_confirm": "Are you sure you want to logout?",
     "push_notifications": "Push Notifications",
-    "email_notifications": "Email Notifications"
+    "email_notifications": "Email Notifications",
+    "notifications_section": "Notifications"
   },
   "language": {
     "title": "Language",

@@ -33,6 +33,8 @@ const pinia = createPinia()
 /* Bootstrap stores that need to run on startup */
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/auth'
+import { useFunction } from '@/composables/useFunction'
+import { useCP } from '@/composables/useCP'
 
 const app = createApp(App)
   .use(IonicVue)
@@ -41,11 +43,31 @@ const app = createApp(App)
   .use(i18n)
 
 router.isReady().then(async () => {
-  const themeStore = useThemeStore()
-  await themeStore.loadTheme()
-
-  const authStore = useAuthStore()
-  await authStore.fetchUser()
-
+  // Mount immediately so the app UI is rendered without waiting for background tasks
   app.mount('#app')
+
+  try {
+    const themeStore = useThemeStore()
+    await themeStore.loadTheme()
+  } catch (error) {
+    console.error('Theme load error:', error)
+  }
+
+  try {
+    const authStore = useAuthStore()
+    await authStore.fetchUser()
+  } catch (error) {
+    console.error('Auth load error:', error)
+  }
+
+  try {
+    const authToken = await useCP().get('auth_token')
+    if (authToken) {
+      const location = useFunction()
+      await location.syncDeviceLocation()
+      location.startDeviceLocationTracking()
+    }
+  } catch (error) {
+    console.error('Unable to sync device location:', error)
+  }
 })

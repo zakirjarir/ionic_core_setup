@@ -198,7 +198,7 @@ onIonViewWillLeave(async () => {
 })
 
 const store = useStore()
-const { submitData} = useFunction()
+const { submitData, syncDeviceLocation, startDeviceLocationTracking} = useFunction()
 const CP = useCP()
 const {toastAlert} =useAlert()
 const showPassword = ref(false)
@@ -218,7 +218,14 @@ const handleLogin = async () => {
     store.authToken = resp?.result?.token
     store.user = resp?.result?.user
 
-   const token = await CP.get('auth_token')
+    try {
+      await syncDeviceLocation()
+      startDeviceLocationTracking()
+    } catch (error) {
+      console.error('Unable to sync device location after login:', error)
+    }
+
+    const token = await CP.get('auth_token')
     console.log('token',token)
     return router.replace('/tabs/dashboard')
   } else if (resp) {
